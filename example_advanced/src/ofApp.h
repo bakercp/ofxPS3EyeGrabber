@@ -27,6 +27,7 @@
 
 
 #include "ofMain.h"
+#include "ofxPS3EyeGrabber.h"
 
 
 class ofApp: public ofBaseApp
@@ -36,6 +37,11 @@ public:
     void update();
     void draw();
 
-    ofVideoGrabber vidGrabber;
+    ofxPS3EyeGrabber vidGrabber;
+    ofTexture videoTexture;
+
+    int camWidth;
+    int camHeight;
+    int camFrameRate;
 
 };

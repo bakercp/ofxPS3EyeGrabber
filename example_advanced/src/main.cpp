@@ -23,19 +23,11 @@
 // =============================================================================
 
 
-#pragma once
+#include "ofApp.h"
 
 
-#include "ofMain.h"
-
-
-class ofApp: public ofBaseApp
+int main()
 {
-public:
-    void setup();
-    void update();
-    void draw();
-
-    ofVideoGrabber vidGrabber;
-
-};
+    ofSetupOpenGL(640, 480, OF_WINDOW);
+    ofRunApp(new ofApp());
+}

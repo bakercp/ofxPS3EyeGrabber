@@ -24,65 +24,25 @@
 
 
 #include "ofApp.h"
+#include "ofxPS3EyeGrabber.h"
 
 
 void ofApp::setup()
 {
-    ofSetVerticalSync(false);
-
-	camWidth = 640;
-	camHeight = 480;
-    camFrameRate = 120;
-
-    //we can now get back a list of devices.
-    std::vector<ofVideoDevice> devices = vidGrabber.listDevices();
-
-    for(std::size_t i = 0; i < devices.size(); ++i)
-    {
-        std::stringstream ss;
-
-        ss << devices[i].id << ": " << devices[i].deviceName;
-
-        if(!devices[i].bAvailable)
-        {
-            ss << " - unavailable ";
-        }
-
-        ofLogNotice("ofApp::setup") << ss.str();
-	}
-
-	vidGrabber.setDeviceID(0);
-	vidGrabber.setDesiredFrameRate(camFrameRate);
-	vidGrabber.initGrabber(camWidth, camHeight);
-
-    vidGrabber.setAutogain(false);
-    vidGrabber.setAutoWhiteBalance(false);
-
+    vidGrabber.setGrabber(ofPtr<ofxPS3EyeGrabber>(new ofxPS3EyeGrabber()));
+    vidGrabber.initGrabber(640, 480);
 }
 
 
 void ofApp::update()
 {
 	vidGrabber.update();
-
-	if (vidGrabber.isFrameNew())
-    {
-		videoTexture.loadData(vidGrabber.getPixelsRef());
-	}
 }
+
 
 void ofApp::draw()
 {
     ofBackground(0);
     ofSetColor(255);
-
-    videoTexture.draw(0, 0);
-
-    std::stringstream ss;
-
-    ss << "App FPS: " << ofGetFrameRate() << std::endl;
-    ss << "Cam FPS: " << vidGrabber.getFPS();
-
-    ofDrawBitmapStringHighlight(ss.str(), ofPoint(10, 15));
-
+    vidGrabber.draw(0, 0);
 }
