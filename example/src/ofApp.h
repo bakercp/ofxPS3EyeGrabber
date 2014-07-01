@@ -43,4 +43,5 @@ public:
     int camWidth;
     int camHeight;
     int camFrameRate;
+
 };

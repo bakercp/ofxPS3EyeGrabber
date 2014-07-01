@@ -28,10 +28,10 @@
 
 void ofApp::setup()
 {
-    ofSetFrameRate(120);
+    ofSetVerticalSync(false);
 
-	camWidth = 320;
-	camHeight = 240;
+	camWidth = 640;
+	camHeight = 480;
     camFrameRate = 120;
 
     //we can now get back a list of devices.
@@ -52,8 +52,8 @@ void ofApp::setup()
 	}
 
 	vidGrabber.setDeviceID(0);
-	vidGrabber.setDesiredFrameRate(60);
-	vidGrabber.initGrabber(640, 480);
+	vidGrabber.setDesiredFrameRate(camFrameRate);
+	vidGrabber.initGrabber(camWidth, camHeight);
 
     vidGrabber.setAutogain(false);
     vidGrabber.setAutoWhiteBalance(false);
@@ -75,5 +75,14 @@ void ofApp::draw()
 {
     ofBackground(0);
     ofSetColor(255);
-	videoTexture.draw(0, 0);
+
+    videoTexture.draw(0, 0);
+
+    std::stringstream ss;
+
+    ss << "App FPS: " << ofGetFrameRate() << std::endl;
+    ss << "Cam FPS: " << vidGrabber.getFPS();
+
+    ofDrawBitmapStringHighlight(ss.str(), ofPoint(10, 15));
+
 }
