@@ -165,15 +165,16 @@ void ofxPS3EyeGrabber::update()
 
     if (_cam)
     {
-        bool isNewFrame = _cam->isNewFrame();
+        if (_cam->isNewFrame())
+        {
+            yuv422_to_rgba(_cam->getLastFramePointer(),
+                           _cam->getRowBytes(),
+                           _pixels.getPixels(),
+                           _cam->getWidth(),
+                           _cam->getHeight());
 
-        yuv422_to_rgba(_cam->getLastFramePointer(),
-                       _cam->getRowBytes(),
-                       _pixels.getPixels(),
-                       _cam->getWidth(),
-                       _cam->getHeight());
-
-        _isFrameNew = true;
+            _isFrameNew = true;
+        }
     }
 }
 
