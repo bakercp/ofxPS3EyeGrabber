@@ -252,15 +252,25 @@ float ofxPS3EyeGrabber::getWidth()
     }
 }
 
+
 bool ofxPS3EyeGrabber::setPixelFormat(ofPixelFormat pixelFormat)
 {
-    return false;
+	if (pixelFormat == OF_PIXELS_RGBA)
+    {
+		return true;
+	}
+    else
+    {
+        ofLogWarning("ofxPS3EyeGrabber::setPixelFormat") << "setPixelFormat(): requested pixel format " << pixelFormat << " not supported";
+        return false;
+    }
 }
 
 
 ofPixelFormat ofxPS3EyeGrabber::getPixelFormat()
 {
-    return OF_PIXELS_UNKNOWN;
+    // Can we return this directly from ofPixels?
+    return OF_PIXELS_RGBA;
 }
 
 
