@@ -35,9 +35,9 @@ const int ofxPS3EyeGrabber::ITUR_BT_601_CVR = 1673527;
 const int ofxPS3EyeGrabber::ITUR_BT_601_SHIFT = 20;
 
 
-void ofxPS3EyeGrabber::yuv422_to_rgba(const uint8_t *yuv_src,
+void ofxPS3EyeGrabber::yuv422_to_rgba(const uint8_t* yuv_src,
                                       const int stride,
-                                      uint8_t *dst,
+                                      uint8_t* dst,
                                       const int width,
                                       const int height)
 {
@@ -132,11 +132,15 @@ bool ofxPS3EyeGrabber::initGrabber(int w, int h)
         if (_deviceId < eyeDevices.size())
         {
             _cam = eyeDevices[_deviceId];
-            _pixels.allocate(w, h, OF_PIXELS_RGBA);
+
             bool success = _cam->init(w, h, _desiredFrameRate);
 
             if (success)
             {
+                // We allocate the actual dimensions as they are restricted.
+                _pixels.allocate(_cam->getWidth(),
+                                 _cam->getHeight(),
+                                 OF_PIXELS_RGBA);
                 start();
                 return true;
             }
