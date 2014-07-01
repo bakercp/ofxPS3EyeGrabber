@@ -84,7 +84,10 @@ void ofxPS3EyeGrabber::yuv422_to_rgba(const uint8_t* yuv_src,
 ofxPS3EyeGrabber::ofxPS3EyeGrabber():
     _deviceId(0),
     _desiredFrameRate(60),
-    _isFrameNew(true)
+    _isFrameNew(true),
+    _currentFPS(0),
+    _lastSampleTime(0),
+    _numFramesSampled(0)
 {
     ofAddListener(ofEvents().exit, this, &ofxPS3EyeGrabber::exit);
 }
@@ -178,6 +181,22 @@ void ofxPS3EyeGrabber::update()
                            _cam->getHeight());
 
             _isFrameNew = true;
+
+            unsigned long long now = ofGetSystemTime();
+
+            if (!_lastSampleTime) _lastSampleTime = now;
+
+            unsigned long long dt = now - _lastSampleTime;
+
+            _numFramesSampled++;
+
+            if (dt > FPS_SAMPLE_INTERVAL)
+            {
+                _currentFPS = _numFramesSampled * 1000.0 / dt;
+                _lastSampleTime = now;
+                _numFramesSampled = 0;
+            }
+
         }
     }
 }
@@ -558,6 +577,12 @@ void ofxPS3EyeGrabber::setFlip(bool horizontal, bool vertical)
 }
 
 
+float ofxPS3EyeGrabber::getFPS() const
+{
+    return _currentFPS;
+}
+
+
 void ofxPS3EyeGrabber::exit(ofEventArgs& args)
 {
     stop();
@@ -579,6 +604,9 @@ void ofxPS3EyeGrabber::stop()
     stopThread();
     if(_cam)
     {
+        _currentFPS = 0;
+        _lastSampleTime = 0;
+        _numFramesSampled = 0;
         _cam->stop();
     }
 }

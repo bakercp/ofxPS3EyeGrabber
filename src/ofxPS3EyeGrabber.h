@@ -95,6 +95,8 @@ public:
 
     void setFlip(bool horizontal = false, bool vertical = false);
 
+    float getFPS() const;
+
 protected:
     typedef ps3eye::PS3EYECam::PS3EYERef PS3EYERef;
 
@@ -124,4 +126,14 @@ private:
     int _desiredFrameRate;
 
     bool _isFrameNew;
+
+    float _currentFPS;
+    unsigned long long _lastSampleTime;
+    unsigned long long _numFramesSampled;
+
+    enum
+    {
+        FPS_SAMPLE_INTERVAL = 500 // milliseconds
+    };
+
 };
