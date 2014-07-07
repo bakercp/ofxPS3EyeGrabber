@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>IDESourceControlProjectFavoriteDictionaryKey</key>
+	<false/>
+	<key>IDESourceControlProjectIdentifier</key>
+	<string>C3411878-FB8E-4A73-B652-4682A5E0ED4A</string>
+	<key>IDESourceControlProjectName</key>
+	<string>example_advanced_multicam</string>
+	<key>IDESourceControlProjectOriginsDictionary</key>
+	<dict>
+		<key>3B34514A-1075-456B-8AF0-DAEFD698200B</key>
+		<string>ssh://github.com/bakercp/openFrameworks.git</string>
+		<key>79144049-D57E-43F1-9447-57D18B6D875B</key>
+		<string>ssh://github.com/bakercp/ofxPS3EyeGrabber.git</string>
+	</dict>
+	<key>IDESourceControlProjectPath</key>
+	<string>addons/ofxPS3EyeGrabber/example_advanced_multicam/example_advanced_multicam.xcodeproj/project.xcworkspace</string>
+	<key>IDESourceControlProjectRelativeInstallPathDictionary</key>
+	<dict>
+		<key>3B34514A-1075-456B-8AF0-DAEFD698200B</key>
+		<string>../../../../..</string>
+		<key>79144049-D57E-43F1-9447-57D18B6D875B</key>
+		<string>../../..</string>
+	</dict>
+	<key>IDESourceControlProjectURL</key>
+	<string>ssh://github.com/bakercp/ofxPS3EyeGrabber.git</string>
+	<key>IDESourceControlProjectVersion</key>
+	<integer>110</integer>
+	<key>IDESourceControlProjectWCCIdentifier</key>
+	<string>3B34514A-1075-456B-8AF0-DAEFD698200B</string>
+	<key>IDESourceControlProjectWCConfigurations</key>
+	<array>
+		<dict>
+			<key>IDESourceControlRepositoryExtensionIdentifierKey</key>
+			<string>public.vcs.git</string>
+			<key>IDESourceControlWCCIdentifierKey</key>
+			<string>79144049-D57E-43F1-9447-57D18B6D875B</string>
+			<key>IDESourceControlWCCName</key>
+			<string>ofxPS3EyeGrabber</string>
+		</dict>
+		<dict>
+			<key>IDESourceControlRepositoryExtensionIdentifierKey</key>
+			<string>public.vcs.git</string>
+			<key>IDESourceControlWCCIdentifierKey</key>
+			<string>3B34514A-1075-456B-8AF0-DAEFD698200B</string>
+			<key>IDESourceControlWCCName</key>
+			<string>openFrameworks</string>
+		</dict>
+	</array>
+</dict>
+</plist>
