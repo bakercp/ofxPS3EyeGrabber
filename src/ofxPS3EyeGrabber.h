@@ -37,46 +37,46 @@ class ofxPS3EyeGrabber:
 public:
     ofxPS3EyeGrabber();
 
-	virtual ~ofxPS3EyeGrabber();
+    virtual ~ofxPS3EyeGrabber();
 
-	std::vector<ofVideoDevice> listDevices();
-	bool initGrabber(int w, int h);
+    std::vector<ofVideoDevice> listDevices();
+    bool initGrabber(int w, int h);
 
-	void update();
-	bool isFrameNew();
+    void update();
+    bool isFrameNew();
 
-	unsigned char* getPixels();
-	ofPixels& getPixelsRef();
+    unsigned char* getPixels();
+    ofPixels& getPixelsRef();
 
-	void close();
+    void close();
 
-	float getHeight();
-	float getWidth();
+    float getHeight();
+    float getWidth();
 
-	bool setPixelFormat(ofPixelFormat pixelFormat);
-	ofPixelFormat getPixelFormat();
+    bool setPixelFormat(ofPixelFormat pixelFormat);
+    ofPixelFormat getPixelFormat();
 
-	ofTexture* getTexture();
+    ofTexture* getTexture();
 
-	void setVerbose(bool verbose);
-	void setDeviceID(int deviceId);
-	void setDesiredFrameRate(int framerate);
-	void videoSettings();
+    void setVerbose(bool verbose);
+    void setDeviceID(int deviceId);
+    void setDesiredFrameRate(int framerate);
+    void videoSettings();
 
-	bool getAutogain() const;
-	void setAutogain(bool val);
+    bool getAutogain() const;
+    void setAutogain(bool val);
 
-	bool getAutoWhiteBalance() const;
-	void setAutoWhiteBalance(bool val);
+    bool getAutoWhiteBalance() const;
+    void setAutoWhiteBalance(bool val);
 
-	uint8_t getGain() const;
-	void setGain(uint8_t val);
+    uint8_t getGain() const;
+    void setGain(uint8_t val);
 
-	uint8_t getExposure() const;
-	void setExposure(uint8_t val);
+    uint8_t getExposure() const;
+    void setExposure(uint8_t val);
 
-	uint8_t getSharpness() const;
-	void setSharpness(uint8_t val);
+    uint8_t getSharpness() const;
+    void setSharpness(uint8_t val);
 
     uint8_t getContrast() const;
     void setContrast(uint8_t val);
