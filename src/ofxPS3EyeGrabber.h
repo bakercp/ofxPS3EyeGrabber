@@ -21,12 +21,12 @@
 // THE SOFTWARE.
 //
 // =============================================================================
+#pragma once
 
-
-#include "ofThread.h"
-#include "ofTypes.h"
 #include "ofBaseTypes.h"
+#include "ofTypes.h"
 #include "ofEvents.h"
+#include "ofThread.h"
 #include "ps3eye.h"
 
 
@@ -37,24 +37,29 @@ class ofxPS3EyeGrabber:
 public:
     ofxPS3EyeGrabber();
 
-    virtual ~ofxPS3EyeGrabber();
+    ~ofxPS3EyeGrabber();
 
-    std::vector<ofVideoDevice> listDevices();
+    std::vector<ofVideoDevice> listDevices() const;
     bool initGrabber(int w, int h);
 
     void update();
     bool isFrameNew();
+    bool isFrameNew() const;
+
+    bool isInitialized() const;
 
     unsigned char* getPixels();
     ofPixels& getPixelsRef();
+    const ofPixels& getPixelsRef() const;
 
     void close();
 
-    float getHeight();
-    float getWidth();
+    float getHeight() const;
+    float getWidth() const;
 
     bool setPixelFormat(ofPixelFormat pixelFormat);
     ofPixelFormat getPixelFormat();
+    ofPixelFormat getPixelFormat() const;
 
     ofTexture* getTexture();
 
