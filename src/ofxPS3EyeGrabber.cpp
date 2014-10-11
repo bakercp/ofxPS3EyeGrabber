@@ -101,7 +101,7 @@ ofxPS3EyeGrabber::~ofxPS3EyeGrabber()
 }
 
 
-std::vector<ofVideoDevice> ofxPS3EyeGrabber::listDevices()
+std::vector<ofVideoDevice> ofxPS3EyeGrabber::listDevices() const
 {
     std::vector<ofVideoDevice> devices;
 
@@ -202,9 +202,14 @@ void ofxPS3EyeGrabber::update()
 }
 
 
-bool ofxPS3EyeGrabber::isFrameNew()
+bool ofxPS3EyeGrabber::isFrameNew() const
 {
     return _isFrameNew;
+}
+
+bool ofxPS3EyeGrabber::isInitialized() const
+{
+  return _cam;
 }
 
 unsigned char* ofxPS3EyeGrabber::getPixels()
@@ -212,8 +217,12 @@ unsigned char* ofxPS3EyeGrabber::getPixels()
     return _pixels.getPixels();
 }
 
-
 ofPixels& ofxPS3EyeGrabber::getPixelsRef()
+{
+    return _pixels;
+}
+
+const ofPixels& ofxPS3EyeGrabber::getPixelsRef() const
 {
     return _pixels;
 }
@@ -225,7 +234,7 @@ void ofxPS3EyeGrabber::close()
 }
 
 
-float ofxPS3EyeGrabber::getHeight()
+float ofxPS3EyeGrabber::getHeight() const
 {
     if (_cam)
     {
@@ -239,7 +248,7 @@ float ofxPS3EyeGrabber::getHeight()
 }
 
 
-float ofxPS3EyeGrabber::getWidth()
+float ofxPS3EyeGrabber::getWidth() const
 {
     if (_cam)
     {
@@ -267,16 +276,15 @@ bool ofxPS3EyeGrabber::setPixelFormat(ofPixelFormat pixelFormat)
 }
 
 
-ofPixelFormat ofxPS3EyeGrabber::getPixelFormat()
+ofPixelFormat ofxPS3EyeGrabber::getPixelFormat() const
 {
     // Can we return this directly from ofPixels?
     return OF_PIXELS_RGBA;
 }
 
-
 ofTexture* ofxPS3EyeGrabber::getTexture()
 {
-    return 0;
+    return NULL;
 }
 
 
