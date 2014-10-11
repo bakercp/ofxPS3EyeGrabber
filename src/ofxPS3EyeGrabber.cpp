@@ -209,7 +209,7 @@ bool ofxPS3EyeGrabber::isFrameNew() const
 
 bool ofxPS3EyeGrabber::isInitialized() const
 {
-  return true;
+  return _cam;
 }
 
 unsigned char* ofxPS3EyeGrabber::getPixels()
