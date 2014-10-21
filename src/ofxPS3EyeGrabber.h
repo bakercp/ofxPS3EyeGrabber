@@ -35,86 +35,142 @@ class ofxPS3EyeGrabber:
     public ofThread
 {
 public:
+    /// \brief Create an uninitialized PS3EyeGrabber.
     ofxPS3EyeGrabber();
 
-    ~ofxPS3EyeGrabber();
+    /// \brief Destroy the PS3EyeGrabber.
+    virtual ~ofxPS3EyeGrabber();
 
     std::vector<ofVideoDevice> listDevices() const;
-    bool initGrabber(int w, int h);
+
+    bool setup(int w, int h);
 
     void update();
-    bool isFrameNew();
+
     bool isFrameNew() const;
 
     bool isInitialized() const;
 
-    unsigned char* getPixels();
-    ofPixels& getPixelsRef();
-    const ofPixels& getPixelsRef() const;
+    ofPixels& getPixels();
+
+    const ofPixels& getPixels() const;
 
     void close();
 
     float getHeight() const;
+
     float getWidth() const;
 
     bool setPixelFormat(ofPixelFormat pixelFormat);
-    ofPixelFormat getPixelFormat();
+
     ofPixelFormat getPixelFormat() const;
 
-    ofTexture* getTexture();
-
     void setVerbose(bool verbose);
+
     void setDeviceID(int deviceId);
+
     void setDesiredFrameRate(int framerate);
+
     void videoSettings();
 
+    /// \returns true iff auto gain is enabled.
     bool getAutogain() const;
     void setAutogain(bool val);
 
+    /// \returns true iff auto white balance is enabled.
     bool getAutoWhiteBalance() const;
     void setAutoWhiteBalance(bool val);
 
+    /// \returns the current gain setting.
     uint8_t getGain() const;
+
+    /// \brief Set the camera's gain.
+    /// \param val a gain between 0-63.
     void setGain(uint8_t val);
 
+    /// \returns the current exposure setting.
     uint8_t getExposure() const;
+
+    /// \brief Set the camera's exposure.
+    /// \param val an exposure between 0-255.
     void setExposure(uint8_t val);
 
+    /// \returns the current sharpness setting.
+    /// \param val a sharpness between 0-63.
     uint8_t getSharpness() const;
+
+    /// \brief Set the camera's sharpness.
     void setSharpness(uint8_t val);
 
+    /// \returns the current contrast setting.
     uint8_t getContrast() const;
+
+    /// \brief Set the camera's contrast.
+    /// \param val a contrast between 0-255.
     void setContrast(uint8_t val);
 
+    /// \returns the current brightness setting.
     uint8_t getBrightness() const;
+
+    /// \brief Set the camera's brightness.
+    /// \param val a brightness between 0-255.
     void setBrightness(uint8_t val);
 
+    /// \returns the current hue setting.
     uint8_t getHue() const;
+
+    /// \brief Set the camera's hue.
+    /// \param val a hue between 0-255.
     void setHue(uint8_t val);
 
+    /// \returns the current red balance setting.
     uint8_t getRedBalance() const;
+
+    /// \brief Set the camera's red balance.
+    /// \param val a red balance between 0-255.
     void setRedBalance(uint8_t val);
 
+    /// \returns the current blue balance setting.
     uint8_t getBlueBalance() const;
+
+    /// \brief Set the camera's blue balance.
+    /// \param val a blue balance between 0-255.
     void setBlueBalance(uint8_t val);
 
+    /// \brief Flip the camera's image.
+    /// \param horizontal true for a horizontal flip.
+    /// \param vertical true for a vertical flip.
     void setFlip(bool horizontal = false, bool vertical = false);
 
+    /// \returns the camera's current FPS value.
     float getFPS() const;
 
 protected:
+    /// \brief A typedef for the underlying ps3eye::PS3EYECam::PS3EYERef.
     typedef ps3eye::PS3EYECam::PS3EYERef PS3EYERef;
 
+    /// \brief Constant used for YUV conversion.
     static const int ITUR_BT_601_CY;
+    /// \brief Constant used for YUV conversion.
     static const int ITUR_BT_601_CUB;
+    /// \brief Constant used for YUV conversion.
     static const int ITUR_BT_601_CUG;
+    /// \brief Constant used for YUV conversion.
     static const int ITUR_BT_601_CVG;
+    /// \brief Constant used for YUV conversion.
     static const int ITUR_BT_601_CVR;
+    /// \brief Constant used for YUV conversion.
     static const int ITUR_BT_601_SHIFT;
 
-    static void yuv422_to_rgba(const uint8_t *yuv_src,
+    /// \brief Convert YUV422 to RGBA
+    /// \param yuv_source a pointer to the YUV data source.
+    /// \param strid the YUV data stride.
+    /// \param destination the destination RGBA pixels.
+    /// \param width the pixel width.
+    /// \param height the pixel height.
+    static void yuv422_to_rgba(const uint8_t* yuv_source,
                                const int stride,
-                               uint8_t *dst,
+                               uint8_t* destination,
                                const int width,
                                const int height);
 
@@ -138,7 +194,8 @@ private:
 
     enum
     {
-        FPS_SAMPLE_INTERVAL = 500 // milliseconds
+        /// \brief The default FPS sample interval in milliseconds.
+        FPS_SAMPLE_INTERVAL = 500
     };
 
 };

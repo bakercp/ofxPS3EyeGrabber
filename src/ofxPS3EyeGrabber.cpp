@@ -126,7 +126,7 @@ std::vector<ofVideoDevice> ofxPS3EyeGrabber::listDevices() const
     return devices;
 }
 
-bool ofxPS3EyeGrabber::initGrabber(int w, int h)
+bool ofxPS3EyeGrabber::setup(int w, int h)
 {
     if (!_cam)
     {
@@ -176,7 +176,7 @@ void ofxPS3EyeGrabber::update()
         {
             yuv422_to_rgba(_cam->getLastFramePointer(),
                            _cam->getRowBytes(),
-                           _pixels.getPixels(),
+                           _pixels.getData(),
                            _cam->getWidth(),
                            _cam->getHeight());
 
@@ -212,17 +212,12 @@ bool ofxPS3EyeGrabber::isInitialized() const
   return _cam;
 }
 
-unsigned char* ofxPS3EyeGrabber::getPixels()
-{
-    return _pixels.getPixels();
-}
-
-ofPixels& ofxPS3EyeGrabber::getPixelsRef()
+ofPixels& ofxPS3EyeGrabber::getPixels()
 {
     return _pixels;
 }
 
-const ofPixels& ofxPS3EyeGrabber::getPixelsRef() const
+const ofPixels& ofxPS3EyeGrabber::getPixels() const
 {
     return _pixels;
 }
@@ -282,11 +277,6 @@ ofPixelFormat ofxPS3EyeGrabber::getPixelFormat() const
     return OF_PIXELS_RGBA;
 }
 
-ofTexture* ofxPS3EyeGrabber::getTexture()
-{
-    return NULL;
-}
-
 
 void ofxPS3EyeGrabber::setVerbose(bool verbose)
 {
@@ -308,7 +298,7 @@ void ofxPS3EyeGrabber::setDesiredFrameRate(int framerate)
 
 void ofxPS3EyeGrabber::videoSettings()
 {
-    ofLogWarning("ofxPS3EyeGrabber::setDeviceID") << "Not implemented.";
+    ofLogWarning("ofxPS3EyeGrabber::setDeviceID") << "Not implemented.  Call settings (e.g. setAutogain()) directly.";
 }
 
 
