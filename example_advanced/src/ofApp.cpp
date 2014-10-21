@@ -53,7 +53,7 @@ void ofApp::setup()
 
 	vidGrabber.setDeviceID(0);
 	vidGrabber.setDesiredFrameRate(camFrameRate);
-	vidGrabber.initGrabber(camWidth, camHeight);
+	vidGrabber.setup(camWidth, camHeight);
 
     vidGrabber.setAutogain(false);
     vidGrabber.setAutoWhiteBalance(false);
@@ -67,7 +67,7 @@ void ofApp::update()
 
 	if (vidGrabber.isFrameNew())
     {
-		videoTexture.loadData(vidGrabber.getPixelsRef());
+		videoTexture.loadData(vidGrabber.getPixels());
 	}
 }
 

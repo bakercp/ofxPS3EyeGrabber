@@ -53,7 +53,7 @@ void ofApp::setup()
 
             videoGrabber->setDeviceID(i);
             videoGrabber->setDesiredFrameRate(camFrameRate);
-            videoGrabber->initGrabber(camWidth, camHeight);
+            videoGrabber->setup(camWidth, camHeight);
 
             videoGrabbers.push_back(videoGrabber);
 
@@ -76,7 +76,7 @@ void ofApp::update()
 
         if (videoGrabbers[i]->isFrameNew())
         {
-            videoTextures[i].loadData(videoGrabbers[i]->getPixelsRef());
+            videoTextures[i].loadData(videoGrabbers[i]->getPixels());
         }
     }
 }
