@@ -116,3 +116,11 @@ void ofApp::draw()
         }
     }
 }
+
+void ofApp::exit()
+{
+    for(std::size_t i = 0; i < videoGrabbers.size(); ++i)
+    {
+        videoGrabbers[i]->close();
+    }
+}

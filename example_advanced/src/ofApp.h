@@ -36,6 +36,7 @@ public:
     void setup();
     void update();
     void draw();
+    void exit();
 
     ofxPS3EyeGrabber vidGrabber;
     ofTexture videoTexture;
