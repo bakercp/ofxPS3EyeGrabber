@@ -36,7 +36,6 @@ public:
     void setup();
     void update();
     void draw();
-    void exit();
 
     std::vector<std::shared_ptr<ofxPS3EyeGrabber> > videoGrabbers;
     std::vector<ofTexture> videoTextures;

@@ -46,8 +46,3 @@ void ofApp::draw()
     ofSetColor(255);
     vidGrabber.draw(0, 0);
 }
-
-void ofApp::exit()
-{
-    vidGrabber.close();
-}
