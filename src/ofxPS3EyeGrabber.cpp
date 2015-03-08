@@ -189,21 +189,23 @@ bool ofxPS3EyeGrabber::isFrameNew() const
     return _isFrameNew;
 }
 
+
 bool ofxPS3EyeGrabber::isInitialized() const
 {
   return _cam;
 }
+
 
 ofPixels& ofxPS3EyeGrabber::getPixels()
 {
     return _pixels;
 }
 
+
 const ofPixels& ofxPS3EyeGrabber::getPixels() const
 {
     return _pixels;
 }
-
 
 void ofxPS3EyeGrabber::close()
 {
@@ -589,7 +591,7 @@ void ofxPS3EyeGrabber::exit(ofEventArgs& args)
 
 void ofxPS3EyeGrabber::start()
 {
-    if(_cam)
+    if (_cam)
     {
         _cam->start();
         startThread(false); // No blocking.
@@ -610,11 +612,11 @@ void ofxPS3EyeGrabber::stop()
 
 void ofxPS3EyeGrabber::threadedFunction()
 {
-    while(isThreadRunning())
+    while (isThreadRunning())
     {
         bool res = ps3eye::PS3EYECam::updateDevices();
 
-        if(!res)
+        if (!res)
         {
             break;
         }

@@ -151,14 +151,19 @@ protected:
 
     /// \brief Constant used for YUV conversion.
     static const int ITUR_BT_601_CY;
+
     /// \brief Constant used for YUV conversion.
     static const int ITUR_BT_601_CUB;
+
     /// \brief Constant used for YUV conversion.
     static const int ITUR_BT_601_CUG;
+
     /// \brief Constant used for YUV conversion.
     static const int ITUR_BT_601_CVG;
+
     /// \brief Constant used for YUV conversion.
     static const int ITUR_BT_601_CVR;
+
     /// \brief Constant used for YUV conversion.
     static const int ITUR_BT_601_SHIFT;
 
