@@ -54,6 +54,8 @@ void ofApp::setup()
             videoGrabber->setDeviceID(i);
             videoGrabber->setDesiredFrameRate(camFrameRate);
             videoGrabber->setup(camWidth, camHeight);
+            videoGrabber->setAutogain(true);
+            videoGrabber->setAutoWhiteBalance(true);
 
             videoGrabbers.push_back(videoGrabber);
 
