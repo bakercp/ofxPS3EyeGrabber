@@ -6,6 +6,10 @@ raw/
 *.mode1v3
 
 # xcode
+openFrameworks-Info.plist
+Project.xcconfig
+*.xcodeproj
+
 *.pbxuser
 *.perspectivev3
 xcuserdata
