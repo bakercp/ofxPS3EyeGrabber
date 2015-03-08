@@ -188,10 +188,6 @@ private:
 
     bool _isFrameNew;
 
-    float _currentFPS;
-    unsigned long long _lastSampleTime;
-    unsigned long long _numFramesSampled;
-
     enum
     {
         /// \brief The default FPS sample interval in milliseconds.
