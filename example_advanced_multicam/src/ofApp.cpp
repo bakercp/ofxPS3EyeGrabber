@@ -30,26 +30,26 @@ void ofApp::setup()
 {
     ofSetVerticalSync(false);
 
-	camWidth = 320;
-	camHeight = 240;
-    camFrameRate = 60;
+	int camWidth = 640;
+	int camHeight = 480;
+    int camFrameRate = 30;
 
-    //we can now get back a list of devices.
+    // We can now get back a list of devices.
     std::vector<ofVideoDevice> devices = ofxPS3EyeGrabber().listDevices();
 
-    for(std::size_t i = 0; i < devices.size(); ++i)
+    for (std::size_t i = 0; i < devices.size(); ++i)
     {
         std::stringstream ss;
 
         ss << devices[i].id << ": " << devices[i].deviceName;
 
-        if(!devices[i].bAvailable)
+        if (!devices[i].bAvailable)
         {
             ss << " - unavailable ";
         }
         else
         {
-            std::shared_ptr<ofxPS3EyeGrabber> videoGrabber = std::shared_ptr<ofxPS3EyeGrabber>(new ofxPS3EyeGrabber());
+            std::shared_ptr<ofxPS3EyeGrabber> videoGrabber = std::make_shared<ofxPS3EyeGrabber>();
 
             videoGrabber->setDeviceID(i);
             videoGrabber->setDesiredFrameRate(camFrameRate);
@@ -72,7 +72,7 @@ void ofApp::setup()
 
 void ofApp::update()
 {
-    for(std::size_t i = 0; i < videoGrabbers.size(); ++i)
+    for (std::size_t i = 0; i < videoGrabbers.size(); ++i)
     {
         videoGrabbers[i]->update();
 
@@ -91,7 +91,7 @@ void ofApp::draw()
     int x = 0;
     int y = 0;
 
-    for(std::size_t i = 0; i < videoGrabbers.size(); ++i)
+    for (std::size_t i = 0; i < videoGrabbers.size(); ++i)
     {
         ofPushMatrix();
         ofTranslate(x, y);
@@ -107,14 +107,14 @@ void ofApp::draw()
 
         ofPopMatrix();
 
-        if (x + camWidth >= ofGetWidth())
+        if (x + videoGrabbers[i]->getWidth() >= ofGetWidth())
         {
-            y += camHeight;
+            y += videoGrabbers[i]->getHeight();
             x = 0;
         }
         else
         {
-            x += camWidth;
+            x += videoGrabbers[i]->getWidth();
         }
     }
 }

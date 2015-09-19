@@ -40,8 +40,4 @@ public:
     std::vector<std::shared_ptr<ofxPS3EyeGrabber> > videoGrabbers;
     std::vector<ofTexture> videoTextures;
 
-    int camWidth;
-    int camHeight;
-    int camFrameRate;
-
 };
