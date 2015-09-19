@@ -192,7 +192,7 @@ bool ofxPS3EyeGrabber::isFrameNew() const
 
 bool ofxPS3EyeGrabber::isInitialized() const
 {
-  return _cam;
+  return _cam != nullptr;
 }
 
 
@@ -553,6 +553,33 @@ void ofxPS3EyeGrabber::setBlueBalance(uint8_t val)
     {
         ofLogWarning("ofxPS3EyeGrabber::setBlueBalance") << "Camera is not initialized.";
     }
+}
+
+
+uint8_t ofxPS3EyeGrabber::getGreenBalance() const
+{
+	if (_cam)
+	{
+		return _cam->getGreenBalance();
+	}
+	else
+	{
+		ofLogWarning("ofxPS3EyeGrabber::getGreenBalance") << "Camera is not initialized.";
+		return false;
+	}
+}
+
+
+void ofxPS3EyeGrabber::setGreenBalance(uint8_t val)
+{
+	if (_cam)
+	{
+		_cam->setGreenBalance(val);
+	}
+	else
+	{
+		ofLogWarning("ofxPS3EyeGrabber::setGreenBalance") << "Camera is not initialized.";
+	}
 }
 
 

@@ -1,6 +1,6 @@
 // =============================================================================
 //
-// Copyright (c) 2014 Christopher Baker <http://christopherbaker.net>
+// Copyright (c) 2014-2015 Christopher Baker <http://christopherbaker.net>
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -21,7 +21,10 @@
 // THE SOFTWARE.
 //
 // =============================================================================
+
+
 #pragma once
+
 
 #include "ofBaseTypes.h"
 #include "ofTypes.h"
@@ -35,7 +38,7 @@ class ofxPS3EyeGrabber:
     public ofThread
 {
 public:
-    /// \brief Create an uninitialized PS3EyeGrabber.
+    /// \brief Create an uninitialized ofxPS3EyeGrabber.
     ofxPS3EyeGrabber();
 
     /// \brief Destroy the PS3EyeGrabber.
@@ -75,11 +78,17 @@ public:
 
     /// \returns true iff auto gain is enabled.
     bool getAutogain() const;
+
+	/// \brief Set the auto gain.
+	/// \param val the auto gain value.
     void setAutogain(bool val);
 
     /// \returns true iff auto white balance is enabled.
     bool getAutoWhiteBalance() const;
-    void setAutoWhiteBalance(bool val);
+
+	/// \brief Set the auto white balance.
+	/// \param val the auto white balance value.
+	void setAutoWhiteBalance(bool val);
 
     /// \returns the current gain setting.
     uint8_t getGain() const;
@@ -136,6 +145,13 @@ public:
     /// \brief Set the camera's blue balance.
     /// \param val a blue balance between 0-255.
     void setBlueBalance(uint8_t val);
+
+	/// \returns the current green balance setting.
+	uint8_t getGreenBalance() const;
+
+	/// \brief Set the camera's green balance.
+	/// \param val a blue balance between 0-255.
+	void setGreenBalance(uint8_t val);
 
     /// \brief Flip the camera's image.
     /// \param horizontal true for a horizontal flip.

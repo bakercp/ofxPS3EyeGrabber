@@ -353,13 +353,13 @@ namespace ps3eye {
         USBMgr();
         ~USBMgr();
 
-        static std::shared_ptr<USBMgr>  instance();
+        static std::shared_ptr<USBMgr> instance();
         static libusb_context* usbContext() { return instance()->usb_context; }
         static int listDevices(std::vector<PS3EYECam::PS3EYERef>& list);
         static bool handleEvents();
 
         static std::shared_ptr<USBMgr>  sInstance;
-        static int                      sTotalDevices;
+        static int sTotalDevices;
 
     private:
         libusb_context* usb_context;
@@ -386,7 +386,7 @@ namespace ps3eye {
     std::shared_ptr<USBMgr> USBMgr::instance()
     {
         if( !sInstance ) {
-            sInstance = std::shared_ptr<USBMgr>( new USBMgr );
+            sInstance = std::make_shared<USBMgr>();
         }
         return sInstance;
     }
@@ -719,7 +719,8 @@ namespace ps3eye {
         brightness = 20;
         contrast =  37;
         blueblc = 128;
-        redblc = 128;
+		redblc = 128;
+		greenblc = 128;
         flip_h = false;
         flip_v = false;
 
@@ -730,7 +731,7 @@ namespace ps3eye {
 
         device_ = device;
         mgrPtr = USBMgr::instance();
-        urb = std::shared_ptr<URBDesc>( new URBDesc() );
+        urb = std::make_shared<URBDesc>();
     }
 
     PS3EYECam::~PS3EYECam()
@@ -837,7 +838,8 @@ namespace ps3eye {
         setContrast(contrast);
         setSharpness(sharpness);
         setRedBalance(redblc);
-        setBlueBalance(blueblc);
+		setBlueBalance(blueblc);
+		setGreenBalance(greenblc);
         setFlip(flip_h, flip_v);
 
         ov534_set_led(1);

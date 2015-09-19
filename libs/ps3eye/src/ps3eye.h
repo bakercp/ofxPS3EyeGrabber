@@ -139,6 +139,11 @@ namespace ps3eye {
             blueblc = val;
             sccb_reg_write(0x42, val);
         }
+		uint8_t getGreenBalance() const { return greenblc; }
+		void setGreenBalance(uint8_t val) {
+			greenblc = val;
+			sccb_reg_write(0x44, val);
+		}
         void setFlip(bool horizontal = false, bool vertical = false) {
             flip_h = horizontal;
             flip_v = vertical;
@@ -191,6 +196,7 @@ namespace ps3eye {
         uint8_t contrast; // 0 <-> 255
         uint8_t blueblc; // 0 <-> 255
         uint8_t redblc; // 0 <-> 255
+		uint8_t greenblc; // 0 <-> 255
         bool flip_h;
         bool flip_v;
         //
