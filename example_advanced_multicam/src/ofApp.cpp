@@ -37,7 +37,7 @@ void ofApp::setup()
     // We can now get back a list of devices.
     std::vector<ofVideoDevice> devices = ofxPS3EyeGrabber().listDevices();
 
-    for (std::size_t i = 0; i < devices.size(); ++i)
+	for (std::size_t i = 0; i < devices.size(); ++i)
     {
         std::stringstream ss;
 
