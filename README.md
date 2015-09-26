@@ -15,24 +15,25 @@ This addon requires `libusb` for direct camera access.  Rather than including th
 
 The current drivers support the following resolutions and framerates:
 
-| Resolution  | Frame Rate | Notes |
-| ------------- | ------------- | -- |
-| 640x480 | 60 Hz | - |
-| 640x480 | 50 Hz | - |
-| 640x480 | 40 Hz | - |
-| 640x480 | 30 Hz | - |
-| 640x480 | 15 Hz | - |
-| 320x240 | 205 Hz | _Experimental_ |
-| 320x240 | 187 Hz | _Experimental_ |
-| 320x240 | 150 Hz | - |
-| 320x240 | 137 Hz | - |
-| 320x240 | 125 Hz | - |
-| 320x240 | 100 Hz | - |
-| 320x240 | 75 Hz | - |
-| 320x240 | 60 Hz | - |
-| 320x240 | 50 Hz | - |
-| 320x240 | 37 Hz | - |
-| 320x240 | 30 Hz | - |
+|   Resolution  | Frame Rate    | Notes |
+| ------------- | ------------- | ----- |
+| 640x480       | 60 Hz         |       |
+| 640x480       | 50 Hz         |       |
+| 640x480       | 40 Hz         |       |
+| 640x480       | 30 Hz         |       |
+| 640x480       | 15 Hz         |       |
+| 320x240       | 205 Hz        | _Experimental_ |
+| 320x240       | 187 Hz        | _Experimental_ |
+| 320x240       | 150 Hz        |       |
+| 320x240       | 137 Hz        |       |
+| 320x240       | 125 Hz        |       |
+| 320x240       | 100 Hz        |       |
+| 320x240       | 75 Hz         |       |
+| 320x240       | 60 Hz         |       |
+| 320x240       | 50 Hz         |       |
+| 320x240       | 37 Hz         |       |
+| 320x240       | 30 Hz         |       |
+
 
 If you specify a resolution larger than 640 x 480, it will default to 640x480.
 
