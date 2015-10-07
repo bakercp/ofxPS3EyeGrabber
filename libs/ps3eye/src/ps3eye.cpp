@@ -7,6 +7,8 @@
 #else
 #include <sys/time.h>
 #include <time.h>
+#include <chrono>
+#include <cstring>
 #if defined __MACH__ && defined __APPLE__
 #include <mach/mach.h>
 #include <mach/mach_time.h>
@@ -475,7 +477,7 @@ namespace ps3eye {
 
             buff = frame_buffer_end;
             buff1 = buff + bsize;
-            memset(frame_buffer_end, 0, bsize*2);
+			std::memset(frame_buffer_end, 0, bsize*2);
 
             xfr[0] = xfr0;
             xfr[1] = xfr1;
@@ -496,7 +498,7 @@ namespace ps3eye {
             frame_work_ind = 0;
             last_pts = 0;
             last_fid = 0;
-            last_frame_time = 0;
+			last_frame_time = std::chrono::time_point<std::chrono::high_resolution_clock>();
 
             return res == 0;
         }
@@ -556,7 +558,7 @@ namespace ps3eye {
 
             if (packet_type == LAST_PACKET)
             {
-                last_frame_time = getTickCount();
+				last_frame_time = std::chrono::high_resolution_clock::now();
                 frame_complete_ind = frame_work_ind;
                 i = (frame_work_ind + 1) & 15;
                 frame_work_ind = i;
@@ -652,7 +654,7 @@ namespace ps3eye {
         uint8_t frame_complete_ind;
         uint8_t frame_work_ind;
 
-        double last_frame_time;
+        std::chrono::time_point<std::chrono::high_resolution_clock> last_frame_time;
     };
 
     static void LIBUSB_CALL cb_xfr(struct libusb_transfer *xfr)
@@ -848,7 +850,9 @@ namespace ps3eye {
 
         // init and start urb
         urb->start_transfers(handle_, frame_stride*frame_height);
-        last_qued_frame_time = 0;
+
+		last_qued_frame_time = std::chrono::time_point<std::chrono::high_resolution_clock>();
+
         is_streaming = true;
     }
 

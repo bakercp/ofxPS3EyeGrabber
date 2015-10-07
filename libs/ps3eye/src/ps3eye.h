@@ -6,6 +6,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <vector>
+#include <chrono>
 
 // define shared_ptr in std
 
@@ -212,7 +213,7 @@ namespace ps3eye {
         uint32_t frame_stride;
         uint8_t frame_rate;
         
-        double last_qued_frame_time;
+        std::chrono::time_point<std::chrono::high_resolution_clock> last_qued_frame_time;
         
         //usb stuff
         libusb_device *device_;
