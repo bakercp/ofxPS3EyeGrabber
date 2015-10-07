@@ -40,3 +40,11 @@ If you specify a resolution larger than 640 x 480, it will default to 640x480.
 If you specify a resolution less than 640 x 480, it will default to 320 x 240.
 
 Frame rates greater than noted above will default to the next slowest valid frame rate.
+
+In order to use this on Linux, the kernel driver must be disabled to avoid conflicts between the kernel driver and libusb.  One way to disable this is to issue this command after plugging in all of the devices:
+
+```
+sudo modprobe -r gspca_ov534
+```
+
+A preferred method would be to disable udev rules for the PS3Eye came to avoid loading the kernel extensions in the first place.
