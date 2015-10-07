@@ -744,7 +744,8 @@ namespace ps3eye {
     {
         if(handle_ != NULL)
             close_usb();
-        if(usb_buf) free(usb_buf);
+        if(usb_buf)
+			free(usb_buf);
     }
 
     bool PS3EYECam::init(uint32_t width, uint32_t height, uint8_t desiredFrameRate)
