@@ -784,7 +784,7 @@ namespace ps3eye {
 #if defined WIN32 || defined _WIN32 || defined WINCE
         Sleep(100);
 #else
-        nanosleep((struct timespec[]){{0, 100000000}}, NULL);
+        nanosleep((const struct timespec[]){{0, 100000000L}}, NULL);
 #endif
 
         /* initialize the sensor address */
@@ -795,7 +795,7 @@ namespace ps3eye {
 #if defined WIN32 || defined _WIN32 || defined WINCE
         Sleep(10);
 #else
-        nanosleep((struct timespec[]){{0, 10000000}}, NULL);
+        nanosleep((const struct timespec[]){{0, 10000000L}}, NULL);
 #endif
 
         /* probe the sensor */
