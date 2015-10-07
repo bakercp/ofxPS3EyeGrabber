@@ -32,6 +32,9 @@ namespace std {
 
 #include <stdint.h>
 
+#define DEBUG 1
+
+
 #if defined(DEBUG)
 #define debug(x...) fprintf(stdout,x)
 #else

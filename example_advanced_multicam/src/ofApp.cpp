@@ -30,8 +30,8 @@ void ofApp::setup()
 {
     ofSetVerticalSync(false);
 
-	int camWidth = 640;
-	int camHeight = 480;
+	int camWidth = 320;
+	int camHeight = 240;
     int camFrameRate = 30;
 
     // We can now get back a list of devices.
