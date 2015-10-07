@@ -313,39 +313,6 @@ namespace ps3eye {
         return ep_addr;
     }
 
-    // timestapms
-    // WIN and MAC only
-    static int64_t getTickCount()
-    {
-#if defined WIN32 || defined _WIN32 || defined WINCE
-        LARGE_INTEGER counter;
-        QueryPerformanceCounter( &counter );
-        return (int64_t)counter.QuadPart;
-#else
-        return (int64_t)mach_absolute_time();
-#endif
-    }
-
-    static double getTickFrequency()
-    {
-#if defined WIN32 || defined _WIN32 || defined WINCE
-        LARGE_INTEGER freq;
-        QueryPerformanceFrequency(&freq);
-        return (double)freq.QuadPart;
-#else
-        static double freq = 0;
-        if( freq == 0 )
-        {
-            mach_timebase_info_data_t sTimebaseInfo;
-            mach_timebase_info(&sTimebaseInfo);
-            freq = sTimebaseInfo.denom*1e9/sTimebaseInfo.numer;
-        }
-        return freq;
-#endif
-    }
-    //
-
-
     const uint16_t PS3EYECam::VENDOR_ID = 0x1415;
     const uint16_t PS3EYECam::PRODUCT_ID = 0x2000;
 
