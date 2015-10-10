@@ -99,13 +99,20 @@ private:
 
 	// usb ops
 	uint8_t ov534_set_frame_rate(uint8_t frame_rate, bool dry_run = false);
-	void ov534_set_led(int status);
+
+	// Two bits control LED: 0x21 bit 7 and 0x23 bit 7.
+	// (direction and output)?
+	void ov534_set_led(bool status);
 	void ov534_reg_write(uint16_t reg, uint8_t val);
 	uint8_t ov534_reg_read(uint16_t reg);
 	int sccb_check_status();
 	void sccb_reg_write(uint8_t reg, uint8_t val);
 	uint8_t sccb_reg_read(uint16_t reg);
+
+	// output a bridge sequence (reg - val)
 	void reg_w_array(const uint8_t (*data)[2], int len);
+
+	// output a sensor sequence (reg - val)
 	void sccb_w_array(const uint8_t (*data)[2], int len);
 	
 	// controls
