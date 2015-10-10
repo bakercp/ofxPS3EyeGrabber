@@ -156,7 +156,11 @@ public:
     /// \brief Flip the camera's image.
     /// \param horizontal true for a horizontal flip.
     /// \param vertical true for a vertical flip.
-    void setFlip(bool horizontal = false, bool vertical = false);
+    void setFlip(bool horizontal, bool vertical);
+
+	/// \brief Enable the LED.
+	/// \param enable True if the LED should be enabled.
+	void setLED(bool enable);
 
     /// \returns the camera's current FPS value.
     float getFPS() const;

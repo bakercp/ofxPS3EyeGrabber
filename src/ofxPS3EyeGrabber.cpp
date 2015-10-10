@@ -596,6 +596,20 @@ void ofxPS3EyeGrabber::setFlip(bool horizontal, bool vertical)
 }
 
 
+void ofxPS3EyeGrabber::setLED(bool enable)
+{
+	if (_cam)
+	{
+		_cam->setLED(enable);
+	}
+	else
+	{
+		ofLogWarning("ofxPS3EyeGrabber::setFlip") << "Camera is not initialized.";
+	}
+}
+
+
+
 float ofxPS3EyeGrabber::getFPS() const
 {
     if (_cam)
