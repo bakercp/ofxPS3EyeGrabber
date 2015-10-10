@@ -1,36 +1,16 @@
 // From: https://github.com/inspirit/PS3EYEDriver/
 
-#ifndef PS3EYECAM_H
-#define PS3EYECAM_H
+
+#pragma once
+
 
 #include <cstdio>
 #include <cstdlib>
+#include <cstdint>
 #include <vector>
 #include <chrono>
-
-// define shared_ptr in std
-
-#if (defined( _MSC_VER ) && ( _MSC_VER >= 1600 )) || (__cplusplus >= 201103L)
 #include <memory>
-#else
-#include <tr1/memory>
-namespace std {
-    using std::tr1::shared_ptr;
-    using std::tr1::weak_ptr;
-    using std::tr1::static_pointer_cast;
-    using std::tr1::dynamic_pointer_cast;
-    using std::tr1::const_pointer_cast;
-    using std::tr1::enable_shared_from_this;
-}
-#endif
-
 #include "libusb.h"
-
-#ifndef __STDC_CONSTANT_MACROS
-#  define __STDC_CONSTANT_MACROS
-#endif
-
-#include <stdint.h>
 
 #define DEBUG 1
 
@@ -40,7 +20,6 @@ namespace std {
 #else
 #define debug(x...)
 #endif
-
 
 
 class USBMgr;
@@ -68,134 +47,44 @@ public:
 	void stop();
 
 	// Controls
-
-	bool getAutogain() const
-	{
-		return autogain;
-	}
-
-
-	void setAutogain(bool val)
-	{
-		autogain = val;
-		if (val) {
-			sccb_reg_write(0x13, 0xf7); //AGC,AEC,AWB ON
-			sccb_reg_write(0x64, sccb_reg_read(0x64)|0x03);
-		} else {
-			sccb_reg_write(0x13, 0xf0); //AGC,AEC,AWB OFF
-			sccb_reg_write(0x64, sccb_reg_read(0x64)&0xFC);
-
-			setGain(gain);
-			setExposure(exposure);
-		}
-	}
-
-	bool getAutoWhiteBalance() const
-	{
-		return awb;
-	}
+	bool getAutogain() const;
+	void setAutogain(bool val);
+	bool getAutoWhiteBalance() const;
+	void setAutoWhiteBalance(bool val);
+	uint8_t getGain() const;
 
 
-	void setAutoWhiteBalance(bool val)
-	{
-		awb = val;
+	void setGain(uint8_t val);
+	uint8_t getExposure() const;
+	void setExposure(uint8_t val);
+	uint8_t getSharpness() const;
+	void setSharpness(uint8_t val);
+	uint8_t getContrast() const;
+	void setContrast(uint8_t val);
+	uint8_t getBrightness() const;
+	void setBrightness(uint8_t val);
+	uint8_t getHue() const;
+	void setHue(uint8_t val);
+	uint8_t getRedBalance() const;
+	void setRedBalance(uint8_t val);
+	uint8_t getBlueBalance() const;
+	void setBlueBalance(uint8_t val);
+	uint8_t getGreenBalance() const;
+	void setGreenBalance(uint8_t val);
 
-		if (val)
-		{
-			sccb_reg_write(0x63, 0xe0); //AWB ON
-		}else{
-			sccb_reg_write(0x63, 0xAA); //AWB OFF
-		}
-	}
-
-	uint8_t getGain() const { return gain; }
-	void setGain(uint8_t val) {
-		gain = val;
-		switch(val & 0x30){
-			case 0x00:
-				val &=0x0F;
-				break;
-			case 0x10:
-				val &=0x0F;
-				val |=0x30;
-				break;
-			case 0x20:
-				val &=0x0F;
-				val |=0x70;
-				break;
-			case 0x30:
-				val &=0x0F;
-				val |=0xF0;
-				break;
-		}
-		sccb_reg_write(0x00, val);
-	}
-	uint8_t getExposure() const { return exposure; }
-	void setExposure(uint8_t val) {
-		exposure = val;
-		sccb_reg_write(0x08, val>>7);
-		sccb_reg_write(0x10, val<<1);
-	}
-	uint8_t getSharpness() const { return sharpness; }
-	void setSharpness(uint8_t val) {
-		sharpness = val;
-		sccb_reg_write(0x91, val); //vga noise
-		sccb_reg_write(0x8E, val); //qvga noise
-	}
-	uint8_t getContrast() const { return contrast; }
-	void setContrast(uint8_t val) {
-		contrast = val;
-		sccb_reg_write(0x9C, val);
-	}
-	uint8_t getBrightness() const { return brightness; }
-	void setBrightness(uint8_t val) {
-		brightness = val;
-		sccb_reg_write(0x9B, val);
-	}
-	uint8_t getHue() const { return hue; }
-	void setHue(uint8_t val) {
-		hue = val;
-		sccb_reg_write(0x01, val);
-	}
-	uint8_t getRedBalance() const { return redblc; }
-	void setRedBalance(uint8_t val) {
-		redblc = val;
-		sccb_reg_write(0x43, val);
-	}
-	uint8_t getBlueBalance() const { return blueblc; }
-	void setBlueBalance(uint8_t val) {
-		blueblc = val;
-		sccb_reg_write(0x42, val);
-	}
-	uint8_t getGreenBalance() const { return greenblc; }
-	void setGreenBalance(uint8_t val) {
-		greenblc = val;
-		sccb_reg_write(0x44, val);
-	}
-	void setFlip(bool horizontal = false, bool vertical = false) {
-		flip_h = horizontal;
-		flip_v = vertical;
-		uint8_t val = sccb_reg_read(0x0c);
-		val &= ~0xc0;
-		if (!horizontal) val |= 0x40;
-		if (!vertical) val |= 0x80;
-		sccb_reg_write(0x0c, val);
-	}
+	void setFlip(bool horizontal = false, bool vertical = false);
 
 
-	bool isStreaming() const { return is_streaming; }
+	bool isStreaming() const;
 	bool isNewFrame() const;
 	const uint8_t* getLastFramePointer();
 
-	uint32_t getWidth() const { return frame_width; }
-	uint32_t getHeight() const { return frame_height; }
-	uint8_t getFrameRate() const { return frame_rate; }
-	uint32_t getRowBytes() const { return frame_stride; }
+	uint32_t getWidth() const;
+	uint32_t getHeight() const;
+	uint8_t getFrameRate() const;
+	uint32_t getRowBytes() const;
 
-	void setLED(bool enable)
-	{
-		ov534_set_led(enable);
-	}
+	void setLED(bool enable);
 
 	//
 	static const std::vector<PS3EYERef>& getDevices( bool forceRefresh = false );
@@ -265,5 +154,3 @@ private:
 
 } // namespace
 
-
-#endif

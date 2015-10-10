@@ -716,22 +716,162 @@ namespace ps3eye {
         is_streaming = false;
     }
 
-    bool PS3EYECam::isNewFrame() const
-    {
-        if(last_qued_frame_time < urb->last_frame_time)
-        {
-            return true;
-        }
-        return false;
-    }
-    
-    const uint8_t* PS3EYECam::getLastFramePointer()
-    {
-        last_qued_frame_time = urb->last_frame_time;
-        const uint8_t* frame = const_cast<uint8_t*>(urb->frame_buffer + urb->frame_complete_ind * urb->frame_size);
-        return frame;
-    }
-    
+	bool PS3EYECam::getAutogain() const
+	{
+		return autogain;
+	}
+
+
+	void PS3EYECam::setAutogain(bool val)
+	{
+		autogain = val;
+		if (val) {
+			sccb_reg_write(0x13, 0xf7); //AGC,AEC,AWB ON
+			sccb_reg_write(0x64, sccb_reg_read(0x64)|0x03);
+		} else {
+			sccb_reg_write(0x13, 0xf0); //AGC,AEC,AWB OFF
+			sccb_reg_write(0x64, sccb_reg_read(0x64)&0xFC);
+
+			setGain(gain);
+			setExposure(exposure);
+		}
+	}
+
+	bool PS3EYECam::getAutoWhiteBalance() const
+	{
+		return awb;
+	}
+
+
+	void PS3EYECam::setAutoWhiteBalance(bool val)
+	{
+		awb = val;
+
+		if (val)
+		{
+			sccb_reg_write(0x63, 0xe0); //AWB ON
+		}
+		else
+		{
+			sccb_reg_write(0x63, 0xAA); //AWB OFF
+		}
+	}
+
+	uint8_t PS3EYECam::getGain() const { return gain; }
+
+
+	void PS3EYECam::setGain(uint8_t val) {
+		gain = val;
+		switch(val & 0x30){
+			case 0x00:
+				val &=0x0F;
+				break;
+			case 0x10:
+				val &=0x0F;
+				val |=0x30;
+				break;
+			case 0x20:
+				val &=0x0F;
+				val |=0x70;
+				break;
+			case 0x30:
+				val &=0x0F;
+				val |=0xF0;
+				break;
+		}
+		sccb_reg_write(0x00, val);
+	}
+	uint8_t PS3EYECam::getExposure() const { return exposure; }
+
+	void PS3EYECam::setExposure(uint8_t val) {
+		exposure = val;
+		sccb_reg_write(0x08, val>>7);
+		sccb_reg_write(0x10, val<<1);
+	}
+
+	uint8_t PS3EYECam::getSharpness() const { return sharpness; }
+	void PS3EYECam::setSharpness(uint8_t val) {
+		sharpness = val;
+		sccb_reg_write(0x91, val); //vga noise
+		sccb_reg_write(0x8E, val); //qvga noise
+	}
+
+	uint8_t PS3EYECam::getContrast() const { return contrast; }
+	void PS3EYECam::setContrast(uint8_t val) {
+		contrast = val;
+		sccb_reg_write(0x9C, val);
+	}
+	uint8_t PS3EYECam::getBrightness() const { return brightness; }
+	void PS3EYECam::setBrightness(uint8_t val) {
+		brightness = val;
+		sccb_reg_write(0x9B, val);
+	}
+	uint8_t PS3EYECam::getHue() const { return hue; }
+
+	void PS3EYECam::setHue(uint8_t val) {
+		hue = val;
+		sccb_reg_write(0x01, val);
+	}
+
+	uint8_t PS3EYECam::getRedBalance() const { return redblc; }
+
+	void PS3EYECam::setRedBalance(uint8_t val) {
+		redblc = val;
+		sccb_reg_write(0x43, val);
+	}
+	uint8_t PS3EYECam::getBlueBalance() const { return blueblc; }
+
+	void PS3EYECam::setBlueBalance(uint8_t val) {
+		blueblc = val;
+		sccb_reg_write(0x42, val);
+	}
+
+	uint8_t PS3EYECam::getGreenBalance() const { return greenblc; }
+
+	void PS3EYECam::setGreenBalance(uint8_t val) {
+		greenblc = val;
+		sccb_reg_write(0x44, val);
+	}
+	void PS3EYECam::setFlip(bool horizontal, bool vertical) {
+		flip_h = horizontal;
+		flip_v = vertical;
+		uint8_t val = sccb_reg_read(0x0c);
+		val &= ~0xc0;
+		if (!horizontal) val |= 0x40;
+		if (!vertical) val |= 0x80;
+		sccb_reg_write(0x0c, val);
+	}
+
+
+	bool PS3EYECam::isStreaming() const { return is_streaming; }
+
+	bool PS3EYECam::isNewFrame() const
+	{
+		if(last_qued_frame_time < urb->last_frame_time)
+		{
+			return true;
+		}
+		return false;
+	}
+
+	const uint8_t* PS3EYECam::getLastFramePointer()
+	{
+		last_qued_frame_time = urb->last_frame_time;
+		const uint8_t* frame = const_cast<uint8_t*>(urb->frame_buffer + urb->frame_complete_ind * urb->frame_size);
+		return frame;
+	}
+
+	uint32_t PS3EYECam::getWidth() const { return frame_width; }
+	uint32_t PS3EYECam::getHeight() const { return frame_height; }
+	uint8_t PS3EYECam::getFrameRate() const { return frame_rate; }
+	uint32_t PS3EYECam::getRowBytes() const { return frame_stride; }
+
+	void PS3EYECam::setLED(bool enable)
+	{
+		ov534_set_led(enable);
+	}
+
+
     bool PS3EYECam::open_usb()
     {
         // open, set first config and claim interface

@@ -208,7 +208,7 @@ private:
     PS3EYERef _cam;
     ofPixels _pixels;
 
-    int _deviceId;
+	std::size_t _deviceId;
     int _desiredFrameRate;
 
     bool _isFrameNew;

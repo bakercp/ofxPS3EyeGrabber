@@ -14,7 +14,7 @@ public:
 	~USBMgr();
 
 	static std::shared_ptr<USBMgr> instance();
-	static libusb_context* usbContext() { return instance()->usb_context; }
+	static libusb_context* usbContext();
 	static int listDevices(std::vector<ps3eye::PS3EYECam::PS3EYERef>& list);
 	static bool handleEvents();
 
