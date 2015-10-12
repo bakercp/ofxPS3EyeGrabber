@@ -3,6 +3,7 @@
 
 #include <memory>
 #include <vector>
+#include <cstring>
 #include "libusb.h"
 #include "ps3eye.h"
 
