@@ -2,7 +2,6 @@
 #include <iostream>
 
 
-std::shared_ptr<USBManager> USBManager::sInstance;
 int USBManager::sTotalDevices = 0;
 
 
@@ -20,26 +19,22 @@ USBManager::~USBManager()
 }
 
 
-std::shared_ptr<USBManager> USBManager::instance()
+USBManager& USBManager::instance()
 {
-	if (!sInstance)
-	{
-		sInstance = std::make_shared<USBManager>();
-	}
-
-	return sInstance;
+	static USBManager instance;
+	return instance;
 }
 
 
 libusb_context* USBManager::usbContext()
 {
-	return instance()->usb_context;
+	return instance().usb_context;
 }
 
 
 bool USBManager::handleEvents()
 {
-	return (libusb_handle_events(instance()->usb_context) == 0);
+	return (libusb_handle_events(instance().usb_context) == 0);
 }
 
 
@@ -48,7 +43,7 @@ int USBManager::listDevices(std::vector<std::shared_ptr<ps3eye::PS3EYECam>>& lis
 	libusb_device *dev;
 	libusb_device **devs;
 
-	int cnt = libusb_get_device_list(instance()->usb_context, &devs);
+	int cnt = libusb_get_device_list(instance().usb_context, &devs);
 
 	if (cnt < 0)
 		debug("Error Device scan\n");
@@ -126,10 +121,6 @@ bool URBDesc::start_transfers(libusb_device_handle *handle, uint32_t curr_frame_
 
 	frame_size = curr_frame_size;
 
-	// bulk transfers
-//	struct libusb_transfer *xfr0 = libusb_alloc_transfer(0);
-//	struct libusb_transfer *xfr1 = libusb_alloc_transfer(0);
-
 	uint8_t* buff = frame_buffer_end;
 	uint8_t* buff1 = buff + bsize;
 
@@ -157,7 +148,8 @@ bool URBDesc::start_transfers(libusb_device_handle *handle, uint32_t curr_frame_
 							  buff1,
 							  bsize,
 							  cb_xfr,
-							  reinterpret_cast<void*>(this), 0);
+							  reinterpret_cast<void*>(this),
+							  0);
 
 	int res = LIBUSB_SUCCESS;
 
@@ -182,7 +174,7 @@ void URBDesc::close_transfers()
 
 	while (num_transfers)
 	{
-		if (!USBManager::instance()->handleEvents())
+		if (!USBManager::instance().handleEvents())
 		{
 			break;
 		}
@@ -217,8 +209,6 @@ void URBDesc::frame_add(enum gspca_packet_type packet_type,
 		}
 	}
 
-	/* append the packet to the frame buffer */
-
 	// Append the packet to the frame buffer.
 	if (len > 0)
 	{
@@ -252,7 +242,7 @@ void URBDesc::pkt_scan(uint8_t *data, std::size_t len)
 	uint16_t this_fid;
 	std::size_t remaining_len = len;
 
-	std::size_t payload_len = 2048; // bulk type
+	const std::size_t payload_len = 2048; // bulk type
 
 	do
 	{
@@ -373,11 +363,11 @@ void URBDesc::cb_xfr(struct libusb_transfer* xfr)
 }
 
 
-uint8_t URBDesc::find_ep(struct libusb_device *device)
+uint8_t URBDesc::find_ep(struct libusb_device* device)
 {
-	const struct libusb_interface_descriptor *altsetting;
-	const struct libusb_endpoint_descriptor *ep;
-	struct libusb_config_descriptor *config;
+	const struct libusb_interface_descriptor* altsetting;
+	const struct libusb_endpoint_descriptor* ep;
+	struct libusb_config_descriptor* config;
 	uint8_t ep_addr = 0;
 
 	libusb_get_active_config_descriptor(device, &config);

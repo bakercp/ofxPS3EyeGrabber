@@ -557,7 +557,7 @@ const std::vector<std::shared_ptr<PS3EYECam>>& PS3EYECam::getDevices(bool forceR
 
 	devices.clear();
 
-	USBManager::instance()->sTotalDevices = USBManager::instance()->listDevices(devices);
+	USBManager::instance().sTotalDevices = USBManager::instance().listDevices(devices);
 
 	devicesEnumerated = true;
 	return devices;
@@ -566,7 +566,7 @@ const std::vector<std::shared_ptr<PS3EYECam>>& PS3EYECam::getDevices(bool forceR
 
 bool PS3EYECam::updateDevices()
 {
-	return USBManager::instance()->handleEvents();
+	return USBManager::instance().handleEvents();
 }
 
 
@@ -625,7 +625,7 @@ bool PS3EYECam::init(uint32_t width, uint32_t height, uint8_t desiredFrameRate)
 			return false;
 		}
 
-		//libusb_set_configuration(handle_, 0);
+		// libusb_set_configuration(handle_, 0);
 
 		res = libusb_claim_interface(handle_, 0);
 

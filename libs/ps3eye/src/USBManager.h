@@ -14,12 +14,11 @@ public:
 	USBManager();
 	~USBManager();
 
-	static std::shared_ptr<USBManager> instance();
+	static USBManager& instance();
 	static libusb_context* usbContext();
 	static int listDevices(std::vector<std::shared_ptr<ps3eye::PS3EYECam>>& list);
 	static bool handleEvents();
 
-	static std::shared_ptr<USBManager> sInstance;
 	static int sTotalDevices;
 
 private:
