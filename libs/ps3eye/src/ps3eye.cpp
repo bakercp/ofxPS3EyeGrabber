@@ -557,7 +557,7 @@ const std::vector<std::shared_ptr<PS3EYECam>>& PS3EYECam::getDevices(bool forceR
 
 	devices.clear();
 
-	USBManager::instance().sTotalDevices = USBManager::instance().listDevices(devices);
+	devices = URBDesc::listDevices();
 
 	devicesEnumerated = true;
 	return devices;
@@ -566,7 +566,8 @@ const std::vector<std::shared_ptr<PS3EYECam>>& PS3EYECam::getDevices(bool forceR
 
 bool PS3EYECam::updateDevices()
 {
-	return USBManager::instance().handleEvents();
+	return urb->handleEvents();
+//	return USBManager::instance().handleEvents();
 }
 
 

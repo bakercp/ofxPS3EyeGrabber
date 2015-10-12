@@ -2,48 +2,22 @@
 #include <iostream>
 
 
-int USBManager::sTotalDevices = 0;
-
-
-USBManager::USBManager()
+bool URBDesc::handleEvents()
 {
-	libusb_init(&usb_context);
-	libusb_set_debug(usb_context, LIBUSB_LOG_LEVEL_ERROR);
+	return (libusb_handle_events(nullptr) == 0);
 }
 
 
-USBManager::~USBManager()
+std::vector<std::shared_ptr<ps3eye::PS3EYECam>> URBDesc::listDevices()
 {
-	debug("USBManager destructor\n");
-	libusb_exit(usb_context);
-}
+	std::vector<std::shared_ptr<ps3eye::PS3EYECam>> devices;
 
+	libusb_init(nullptr);
 
-USBManager& USBManager::instance()
-{
-	static USBManager instance;
-	return instance;
-}
-
-
-libusb_context* USBManager::usbContext()
-{
-	return instance().usb_context;
-}
-
-
-bool USBManager::handleEvents()
-{
-	return (libusb_handle_events(instance().usb_context) == 0);
-}
-
-
-int USBManager::listDevices(std::vector<std::shared_ptr<ps3eye::PS3EYECam>>& list)
-{
 	libusb_device *dev;
 	libusb_device **devs;
 
-	int cnt = libusb_get_device_list(instance().usb_context, &devs);
+	int cnt = libusb_get_device_list(nullptr, &devs);
 
 	if (cnt < 0)
 		debug("Error Device scan\n");
@@ -61,7 +35,7 @@ int USBManager::listDevices(std::vector<std::shared_ptr<ps3eye::PS3EYECam>>& lis
 		if(desc.idVendor == ps3eye::PS3EYECam::VENDOR_ID &&
 		   desc.idProduct == ps3eye::PS3EYECam::PRODUCT_ID)
 		{
-			list.push_back(std::make_shared<ps3eye::PS3EYECam>(dev));
+			devices.push_back(std::make_shared<ps3eye::PS3EYECam>(dev));
 			libusb_ref_device(dev);
 			cnt++;
 		}
@@ -69,7 +43,9 @@ int USBManager::listDevices(std::vector<std::shared_ptr<ps3eye::PS3EYECam>>& lis
 
 	libusb_free_device_list(devs, 1);
 
-	return cnt;
+	libusb_exit(nullptr);
+
+	return devices;
 }
 
 
@@ -80,6 +56,9 @@ URBDesc::URBDesc():
 	last_pts(0),
 	last_fid(0)
 {
+	libusb_init(nullptr);
+	libusb_set_debug(nullptr, LIBUSB_LOG_LEVEL_ERROR);
+
 	// we allocate max possible size
 	// 16 frames
 
@@ -112,6 +91,9 @@ URBDesc::~URBDesc()
 		delete [] frame_buffer;
 		frame_buffer = NULL;
 	}
+
+	debug("URBDesc destructor\n");
+	libusb_exit(nullptr);
 }
 
 
@@ -174,7 +156,7 @@ void URBDesc::close_transfers()
 
 	while (num_transfers)
 	{
-		if (!USBManager::instance().handleEvents())
+		if (!handleEvents())
 		{
 			break;
 		}
@@ -367,7 +349,7 @@ uint8_t URBDesc::find_ep(struct libusb_device* device)
 {
 	const struct libusb_interface_descriptor* altsetting;
 	const struct libusb_endpoint_descriptor* ep;
-	struct libusb_config_descriptor* config;
+	struct libusb_config_descriptor *config;
 	uint8_t ep_addr = 0;
 
 	libusb_get_active_config_descriptor(device, &config);

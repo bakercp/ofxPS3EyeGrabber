@@ -81,7 +81,7 @@ public:
 	void setLED(bool enable);
 
 	static const std::vector<std::shared_ptr<PS3EYECam>>& getDevices( bool forceRefresh = false );
-	static bool updateDevices();
+	bool updateDevices();
 
 	enum
 	{

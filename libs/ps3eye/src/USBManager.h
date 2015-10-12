@@ -8,31 +8,11 @@
 #include "ps3eye.h"
 
 
-class USBManager
-{
-public:
-	USBManager();
-	~USBManager();
-
-	static USBManager& instance();
-	static libusb_context* usbContext();
-	static int listDevices(std::vector<std::shared_ptr<ps3eye::PS3EYECam>>& list);
-	static bool handleEvents();
-
-	static int sTotalDevices;
-
-private:
-	USBManager(const USBManager&);
-	void operator = (const USBManager&);
-
-	libusb_context* usb_context;
-
-};
-
-
 class URBDesc
 {
 public:
+	static std::vector<std::shared_ptr<ps3eye::PS3EYECam>> listDevices();
+
 	// Values for bmHeaderInfo (Video and Still Image Payload Headers, 2.4.3.3)
 	enum UVC_headers
 	{
@@ -58,6 +38,9 @@ public:
 
 	URBDesc();
 	~URBDesc();
+
+
+	bool handleEvents();
 
 	bool start_transfers(libusb_device_handle *handle, uint32_t curr_frame_size);
 
@@ -91,4 +74,6 @@ public:
 	uint8_t frame_work_ind;
 
 	std::chrono::time_point<std::chrono::high_resolution_clock> last_frame_time;
+
+
 };

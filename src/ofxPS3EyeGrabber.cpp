@@ -655,12 +655,15 @@ void ofxPS3EyeGrabber::threadedFunction()
 {
     while (isThreadRunning())
     {
-        bool res = ps3eye::PS3EYECam::updateDevices();
+		if (_cam)
+		{
+			bool res = _cam->updateDevices();
 
-        if (!res)
-        {
-            break;
-        }
+			if (!res)
+			{
+				break;
+			}
+		}
     }
 }
 
