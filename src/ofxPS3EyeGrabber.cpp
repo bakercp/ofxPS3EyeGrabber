@@ -102,9 +102,9 @@ std::vector<ofVideoDevice> ofxPS3EyeGrabber::listDevices() const
 {
     std::vector<ofVideoDevice> devices;
 
-    const std::vector<PS3EYERef>& eyeDevices = ps3eye::PS3EYECam::getDevices();
+	const std::vector<std::shared_ptr<ps3eye::PS3EYECam>>& eyeDevices = ps3eye::PS3EYECam::getDevices();
 
-    std::vector<PS3EYERef>::const_iterator iter = eyeDevices.begin();
+    auto iter = eyeDevices.begin();
 
     int id = 0;
 
@@ -127,7 +127,7 @@ bool ofxPS3EyeGrabber::setup(int w, int h)
 {
     if (!_cam)
     {
-        const std::vector<PS3EYERef>& eyeDevices = ps3eye::PS3EYECam::getDevices();
+        const std::vector<std::shared_ptr<ps3eye::PS3EYECam>>& eyeDevices = ps3eye::PS3EYECam::getDevices();
 
         if (_deviceId < eyeDevices.size())
         {

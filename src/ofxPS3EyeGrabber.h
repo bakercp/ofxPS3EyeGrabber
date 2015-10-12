@@ -167,7 +167,7 @@ public:
 
 protected:
     /// \brief A typedef for the underlying ps3eye::PS3EYECam::PS3EYERef.
-    typedef ps3eye::PS3EYECam::PS3EYERef PS3EYERef;
+//    typedef ps3eye::PS3EYECam::PS3EYECam PS3EYERef;
 
     /// \brief Constant used for YUV conversion.
     static const int ITUR_BT_601_CY;
@@ -205,7 +205,7 @@ protected:
     void threadedFunction();
 
 private:
-    PS3EYERef _cam;
+	std::shared_ptr<ps3eye::PS3EYECam> _cam;
     ofPixels _pixels;
 
 	std::size_t _deviceId;

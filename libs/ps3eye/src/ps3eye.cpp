@@ -2,30 +2,22 @@
 
 #include "ps3eye.h"
 #include "USBManager.h"
-#include "URBDesc.h"
 
-
-#if defined WIN32 || defined _WIN32 || defined WINCE
-#include <windows.h>
-#else
-#include <sys/time.h>
-#include <time.h>
 #include <chrono>
 #include <cstring>
-#if defined __MACH__ && defined __APPLE__
-#include <mach/mach.h>
-#include <mach/mach_time.h>
-#endif
-#endif
+#include <thread>
+
 
 namespace ps3eye {
 
+
 // Register list of SCCB and microcontroller.
-#define OV534_REG_ADDRESS	0xF1 // MS_ID	/* sensor address */
-#define OV534_REG_SUBADDR	0xF2 // MS_ADDRESS
-#define OV534_REG_WRITE		0xF3 // MS_DO
-#define OV534_REG_READ		0xF4 // MS_DI, read only
-#define OV534_REG_OPERATION	0xF5 // MS_CTRL
+#define OV534_REG_MS_SP	    0xF0 // MS_SP
+#define OV534_REG_MS_ID		0xF1 // MS_ID
+#define OV534_REG_MS_ADDRESS 0xF2 // MS_ADDRESS
+#define OV534_REG_DO		0xF3 // MS_DO
+#define OV534_REG_DI		0xF4 // MS_DI, read only
+#define OV534_REG_CTRL		0xF5 // MS_CTRL, Master command control.
 #define OV534_REG_STATUS	0xF6 // MS_STATUS
 
 #define OV534_REG_RSVD_0	0xF7 // RSVD
@@ -36,7 +28,7 @@ namespace ps3eye {
 #define OV534_REG_MC_AH		0xFB // MC_AH, Program memory pointer address high byte
 #define OV534_REG_MC_D		0xFC // MC_D, Program memory pointer access address
 
-#define OV534_REG_SAMPLE	0xFD // SAMPLE, Audio comb filter controll
+#define OV534_REG_SAMPLE	0xFD // SAMPLE, Audio comb filter control
 #define OV534_REG_AC_BIST	0xFE // AC_BIST, Audio controller built-in-self-test
 
 #define OV534_REG_RSVD_2    0xFF // RSVD
@@ -83,12 +75,29 @@ namespace ps3eye {
 #define OV534_REG_GPIO_N1 0x24 // GPIO Control.
 #define OV534_REG_GPIO_C1 0x25 // GPIO Control.
 #define OV534_REG_GPIO_I1 0x26 // GPIO Control.
-#define OV534_REG_GPIO_V1 0x27 // GPIO Control.
+#define OV534_REG_GPIO_V1 0x27 // IO Pad output.
+
+#define OV534_REG_SENSOR_S1 0x28 // IO Pad driving strength.
+#define OV534_REG_SENSOR_C1 0x29 // IO Pad  output.
+#define OV534_REG_SENSOR_I1 0x2A // IO Pad In/Out control.
+#define OV534_REG_SENSOR_V1 0x2B // IO Pad output.
 
 
 
-
-
+// Video data
+// Video data registers are indirectly controlled by 0x1C / 0x1D registers.
+#define OV534_REG_V_FMT 0x00
+#define OV534_REG_PLOAD_H 0x01
+#define OV534_REG_PLOAD_L 0x02
+#define OV534_REG_FRAME_H 0x03
+#define OV534_REG_FRAME_M 0x04
+#define OV534_REG_FRAME_L 0x05
+#define OV534_REG_HEADER3 0x06
+#define OV534_REG_HEADER2 0x07
+#define OV534_REG_HEADER1 0x08
+#define OV534_REG_HEADER0 0x09
+#define OV534_REG_VCNTL0 0x0A
+#define OV534_REG_VCNTL1 0x0B
 
 
 
@@ -299,52 +308,60 @@ namespace ps3eye {
 
 
 	static const uint8_t bridge_start_vga[][2] = {
-		{ 0x1C, 0x00 },
-		{ 0x1D, 0x40 },
-		{ 0x1D, 0x02 },
-		{ 0x1D, 0x00 },
-		{ 0x1D, 0x02 },
-		{ 0x1D, 0x58 },
-		{ 0x1D, 0x00 },
-		{ 0xC0, 0x50 },
-		{ 0xC1, 0x3C },
+		{ 0x1C, 0x00 }, // Set the video data offset to 0x00
+		{ 0x1D, 0x40 }, // Set the (V_FMT) to 0b0100000, i.e. YUV422
+		{ 0x1D, 0x02 }, // Set the (PLOAD_H) byte to 0x02
+		{ 0x1D, 0x00 }, // Set the (PLOAD_L) byte to 0x00,
+						//	thus total payload is 0x0200 * 4 = 2040 bytes
+
+		{ 0x1D, 0x02 }, // Set the (FRAME_H) byte to 0x02
+		{ 0x1D, 0x58 }, // Set the (FRAME_M) byte to 0x52
+		{ 0x1D, 0x00 }, // Set the (FRAME_L) byte to 0x00
+						//  thus total frame size is 0x025800 = 153600 bytes
+
+		{ 0xC0, 0x50 }, // 80 * 8 = frame size = 640
+		{ 0xC1, 0x3C }, // 60 * 8 = frame size = 480
 	};
 
 
 	static const uint8_t sensor_start_vga[][2] = {
-		{OV772X_REG_COM7, 0x00},
-		{OV772X_REG_HSTART, 0x26},
-		{OV772X_REG_HSIZE, 0xa0},
-		{OV772X_REG_VSTRT, 0x07},
-		{OV772X_REG_VSIZE, 0xf0},
-		{OV772X_REG_HOUTSIZE, 0xa0},
-		{OV772X_REG_VOUTSIZE, 0xf0},
-		{OV772X_REG_DSP_CTRL2, 0x20},
+		{ OV772X_REG_COM7, 0x00},
+		{ OV772X_REG_HSTART, 0x26}, // 38
+		{ OV772X_REG_HSIZE, 0xA0}, // 160
+		{ OV772X_REG_VSTRT, 0x07}, // 7
+		{ OV772X_REG_VSIZE, 0xF0}, // 240
+		{ OV772X_REG_HOUTSIZE, 0xA0}, // 160
+		{ OV772X_REG_VOUTSIZE, 0xF0}, // 240
+		{ OV772X_REG_DSP_CTRL2, 0x20},
 	};
 
 
 	static const uint8_t bridge_start_qvga[][2] = {
-		{ 0x1C, 0x00 },
-		{ 0x1D, 0x40 },
-		{ 0x1D, 0x02 },
-		{ 0x1D, 0x00 },
-		{ 0x1D, 0x01 },
-		{ 0x1D, 0x4B },
-		{ 0x1D, 0x00 },
-		{ 0xC0, 0x28 },
-		{ 0xC1, 0x1E },
+		{ 0x1C, 0x00 }, // Set the video data offset to 0x00
+		{ 0x1D, 0x40 }, // Set the (V_FMT) to 0b0100000, i.e. YUV422
+		{ 0x1D, 0x02 }, // Set the (PLOAD_H) byte to 0x02
+		{ 0x1D, 0x00 }, // Set the (PLOAD_L) byte to 0x00,
+						//	thus total payload is 0x0200 * 4 = 2040 bytes
+
+		{ 0x1D, 0x01 }, // Set the (FRAME_H) byte to 0x01
+		{ 0x1D, 0x4B }, // Set the (FRAME_M) byte to 0x4B
+		{ 0x1D, 0x00 }, // Set the (FRAME_L) byte to 0x00
+						//  thus total frame size is 0x014B00 = 84736 bytes
+
+		{ 0xC0, 0x28 }, // 40 * 8 = frame size = 320
+		{ 0xC1, 0x1E }, // 30 * 8 = frame size = 240
 	};
 
 
 	static const uint8_t sensor_start_qvga[][2] = {
 		{ OV772X_REG_COM7, 0x40 },
-		{ OV772X_REG_HSTART, 0x3f },
-		{ OV772X_REG_HSIZE, 0x50 },
-		{ OV772X_REG_VSTRT, 0x03 },
-		{ OV772X_REG_VSIZE, 0x78 },
-		{ OV772X_REG_HOUTSIZE, 0x50 },
-		{ OV772X_REG_VOUTSIZE, 0x78 },
-		{ OV772X_REG_DSP_CTRL2, 0x2f },
+		{ OV772X_REG_HSTART, 0x3F }, // 63
+		{ OV772X_REG_HSIZE, 0x50 }, // 80
+		{ OV772X_REG_VSTRT, 0x03 }, // 3
+		{ OV772X_REG_VSIZE, 0x78 }, // 120
+		{ OV772X_REG_HOUTSIZE, 0x50 }, // 80
+		{ OV772X_REG_VOUTSIZE, 0x78 }, // 120
+		{ OV772X_REG_DSP_CTRL2, 0x2F },
 	};
 
 
@@ -352,16 +369,19 @@ static const uint8_t ov772x_reg_initdata[][2] = {
 
 	{OV772X_REG_COM7, 0x80 }, // Reset all registers to the default values.
 	{OV772X_REG_CLCRC, 0x01 },
-//        {OV772X_REG_CLCRC, 0x01 },
-//        {OV772X_REG_CLCRC, 0x01 },
-//        {OV772X_REG_CLCRC, 0x01 },
-//        {OV772X_REG_CLCRC, 0x01 },
-//        {OV772X_REG_CLCRC, 0x01 },
-//        {OV772X_REG_CLCRC, 0x01 },
-//        {OV772X_REG_CLCRC, 0x01 },
-//        {OV772X_REG_CLCRC, 0x01 },
-//        {OV772X_REG_CLCRC, 0x01 },
-//        {OV772X_REG_CLCRC, 0x01 },
+	
+	// used for a delay begin
+        {OV772X_REG_CLCRC, 0x01 },
+        {OV772X_REG_CLCRC, 0x01 },
+        {OV772X_REG_CLCRC, 0x01 },
+        {OV772X_REG_CLCRC, 0x01 },
+        {OV772X_REG_CLCRC, 0x01 },
+        {OV772X_REG_CLCRC, 0x01 },
+        {OV772X_REG_CLCRC, 0x01 },
+        {OV772X_REG_CLCRC, 0x01 },
+        {OV772X_REG_CLCRC, 0x01 },
+        {OV772X_REG_CLCRC, 0x01 },
+	// used for a delay end
 
 	{ OV772X_REG_COM12, 0x03 },
 
@@ -375,17 +395,17 @@ static const uint8_t ov772x_reg_initdata[][2] = {
 	{ OV772X_REG_VOUTSIZE, 0xF0 }, // VGA
 	{ OV772X_REG_DSP_CTRL2, 0x20 },
 	{ OV772X_REG_CLCRC, 0x01 },
-	{ OV772X_REG_TGT_B, 0x7f },
+	{ OV772X_REG_TGT_B, 0x7F },
 	{ OV772X_REG_AWB_CTRL0, 0xAA }, //
-	{ OV772X_REG_DSP_CTRL1, 0xff },
+	{ OV772X_REG_DSP_CTRL1, 0xFF },
 	{ OV772X_REG_DSP_CTRL3, 0x00 },
-	{ OV772X_REG_COM8, 0xf0 },	// COM8  - jfrancois 0xf0	orig x0f7
+	{ OV772X_REG_COM8, 0xF0 },	// COM8  - jfrancois 0xf0	orig x0f7
 	{ OV772X_REG_COM4, 0x41 },
-	{ OV772X_REG_COM6, 0xc5 },
+	{ OV772X_REG_COM6, 0xC5 },
 	{ OV772X_REG_COM9, 0x11 },
 
 
-	{ OV772X_REG_BDBASE, 0x7f },
+	{ OV772X_REG_BDBASE, 0x7F },
 	{ OV772X_REG_DBSTEP, 0x03 },
 
 
@@ -410,230 +430,224 @@ static const uint8_t ov772x_reg_initdata[][2] = {
 	{ OV772X_REG_AWB_MTX4, 0x1e },
 	{ OV772X_REG_AWB_MTX5, 0x62 },
 	{ OV772X_REG_AWB_MTX6, 0x80 },
-	{ OV772X_REG_AWB_MTX_CTRL, 0x1e },
+	{ OV772X_REG_AWB_MTX_CTRL, 0x1E },
 	{ OV772X_REG_AWB_BRIGHT, 0x08 },
 	{ OV772X_REG_AWB_CNST, 0x20 },
 	{ OV772X_REG_AWB_UVADJ0, 0x81 },
 	{ OV772X_REG_AWB_SDE, 0x04 },
 
 	// Gamma curve.
-	{OV772X_REG_AWB_GAM1, 0x0C }, // Default 0x0E
-	{OV772X_REG_AWB_GAM2, 0x16 }, // Default 0x1A
-	{OV772X_REG_AWB_GAM3, 0x2A }, // Default 0x31
-	{OV772X_REG_AWB_GAM4, 0x4E }, // Default 0x5A
-	{OV772X_REG_AWB_GAM5, 0x61 }, // Default 0x69
-	{OV772X_REG_AWB_GAM6, 0x6F }, // Default 0x75
-	{OV772X_REG_AWB_GAM7, 0x7B }, // Default 0x7E
-	{OV772X_REG_AWB_GAM8, 0x86 }, // Default 0x88
-	{OV772X_REG_AWB_GAM9, 0x8E }, // Default 0x8F
-	{OV772X_REG_AWB_GAM10, 0x97 }, // Default 0x96
-	{OV772X_REG_AWB_GAM11, 0xA4 }, // Default 0xA3
-	{OV772X_REG_AWB_GAM12, 0xAf }, // Default 0xAF
-	{OV772X_REG_AWB_GAM13, 0xC5 }, // Default 0xC4
-	{OV772X_REG_AWB_GAM14, 0xD7 }, // Default 0xD7
-	{OV772X_REG_AWB_GAM15, 0xE8 }, // Default 0xE8
+	{ OV772X_REG_AWB_GAM1, 0x0C }, // Default 0x0E
+	{ OV772X_REG_AWB_GAM2, 0x16 }, // Default 0x1A
+	{ OV772X_REG_AWB_GAM3, 0x2A }, // Default 0x31
+	{ OV772X_REG_AWB_GAM4, 0x4E }, // Default 0x5A
+	{ OV772X_REG_AWB_GAM5, 0x61 }, // Default 0x69
+	{ OV772X_REG_AWB_GAM6, 0x6F }, // Default 0x75
+	{ OV772X_REG_AWB_GAM7, 0x7B }, // Default 0x7E
+	{ OV772X_REG_AWB_GAM8, 0x86 }, // Default 0x88
+	{ OV772X_REG_AWB_GAM9, 0x8E }, // Default 0x8F
+	{ OV772X_REG_AWB_GAM10, 0x97 }, // Default 0x96
+	{ OV772X_REG_AWB_GAM11, 0xA4 }, // Default 0xA3
+	{ OV772X_REG_AWB_GAM12, 0xAf }, // Default 0xAF
+	{ OV772X_REG_AWB_GAM13, 0xC5 }, // Default 0xC4
+	{ OV772X_REG_AWB_GAM14, 0xD7 }, // Default 0xD7
+	{ OV772X_REG_AWB_GAM15, 0xE8 }, // Default 0xE8
 
-	{OV772X_REG_AWB_SLOP, 0x20 },
+	{ OV772X_REG_AWB_SLOP, 0x20 },
 
-	{OV772X_REG_COM3, 0x90 },
+	{ OV772X_REG_COM3, 0x90 },
 
-	{OV772X_REG_EXHCL, 0x00 },
+	{ OV772X_REG_EXHCL, 0x00 },
 
-	{OV772X_REG_BDBASE, 0x7f },
-	{OV772X_REG_DBSTEP, 0x03 },
+	{ OV772X_REG_BDBASE, 0x7f },
+	{ OV772X_REG_DBSTEP, 0x03 },
 
-	{OV772X_REG_CLCRC, 0x01 },
-	{OV772X_REG_COM3, 0xd0 },
-	{OV772X_REG_DSP_CTRL1, 0xff },
-	{OV772X_REG_COM4, 0x41 },
+	{ OV772X_REG_CLCRC, 0x01 },
+	{ OV772X_REG_COM3, 0xd0 },
+	{ OV772X_REG_DSP_CTRL1, 0xff },
+	{ OV772X_REG_COM4, 0x41 },
 
-	{OV772X_REG_COM9, 0x41 },
-	{OV772X_REG_COM5, 0xCD },
-	{OV772X_REG_AWB_DSPAUTO, 0xBF },
-	{OV772X_REG_AWB_DNSTH, 0x00 },	// De-noise threshold - jfrancois 0x00 - orig 0x04, default 00
-	{OV772X_REG_COM3, 0xd0 }   // COM3, default 00, 0xd0 = 11010000
+	{ OV772X_REG_COM9, 0x41 },
+	{ OV772X_REG_COM5, 0xCD },
+	{ OV772X_REG_AWB_DSPAUTO, 0xBF },
+	{ OV772X_REG_AWB_DNSTH, 0x00 },	// De-noise threshold - jfrancois 0x00 - orig 0x04, default 00
+	{ OV772X_REG_COM3, 0xd0 }   // COM3, default 00, 0xd0 = 11010000
 
 };
 
 
 static const uint8_t ov534_reg_initdata[][2] = {
-	{ OV534_REG_SYS_CTRL, 0x3a },
+	{ OV534_REG_SYS_CTRL, 0x3A }, // Turn the camera ON.
+	{ OV534_REG_MS_ID, OV772X_SLAVE_ADDRESS_WRITE }, // select OV772x sensor
 
-	{ OV534_REG_ADDRESS, OV772X_SLAVE_ADDRESS_WRITE }, /* select OV772x sensor */
-
-	{ 0xc2, 0x0c },
-	{ 0x88, 0xf8 },
-	{ 0xc3, 0x69 },
-	{ 0x89, 0xff },
+	{ 0xC2, 0x0C }, // happens at beginning / end
+	{ 0x88, 0xF8 },
+	{ 0xC3, 0x69 },
+	{ 0x89, 0xFF },
 	{ 0x76, 0x03 },
+
 	{ 0x92, 0x01 },
 	{ 0x93, 0x18 },
 	{ 0x94, 0x10 },
 	{ 0x95, 0x10 },
-	{ 0xe2, 0x00 },
 
-	{ OV534_REG_SYS_CTRL, 0x3e },
+	{ OV534_REG_CLOCK0, 0x00 },
+	{ OV534_REG_SYS_CTRL, 0x3E },
 
 	{ 0x96, 0x00 },
 
 	{ 0x97, 0x20 },
 	{ 0x97, 0x20 },
 	{ 0x97, 0x20 },
-	{ 0x97, 0x0a },
-	{ 0x97, 0x3f },
-	{ 0x97, 0x4a },
+	{ 0x97, 0x0A },
+	{ 0x97, 0x3F },
+	{ 0x97, 0x4A },
 	{ 0x97, 0x20 },
 	{ 0x97, 0x15 },
-	{ 0x97, 0x0b },
+	{ 0x97, 0x0B },
 
-	{ 0x8e, 0x40 },
-	{ 0x1f, 0x81 },
+	{ 0x8E, 0x40 },
+	{ 0x1F, 0x81 },
 	{ 0x34, 0x05 },
-	{ 0xe3, 0x04 },
+	{ OV534_REG_CLOCK1, 0x04 },
 	{ 0x88, 0x00 },
 	{ 0x89, 0x00 },
 	{ 0x76, 0x00 },
-	{ OV534_REG_SYS_CTRL, 0x2e },
-	{ 0x31, 0xf9 },
+	{ OV534_REG_SYS_CTRL, 0x2E },
+	{ 0x31, 0xF9 },
 	{ 0x25, 0x42 },
-	{ 0x21, 0xf0 },
-
-	{ 0x1c, 0x00 },
-	{ 0x1d, 0x40 },
-	{ 0x1d, 0x02 }, /* payload size 0x0200 * 4 = 2048 bytes */
-	{ 0x1d, 0x00 }, /* payload size */
-
-	// -------------
-
-	//	{ 0x1d, 0x01 },/* frame size */		// kwasy
-	//	{ 0x1d, 0x4b },/* frame size */
-	//	{ 0x1d, 0x00 }, /* frame size */
+	{ 0x21, 0xF0 },
 
 
-	//	{ 0x1d, 0x02 },/* frame size */		// macam
-	//	{ 0x1d, 0x57 },/* frame size */
-	//	{ 0x1d, 0xff }, /* frame size */
+	{ 0x1C, 0x00 }, // Set the video data offset to 0x00
+	{ 0x1D, 0x40 }, // Set the (V_FMT) to 0b0100000, i.e. YUV422
+	{ 0x1D, 0x02 }, // Set the (PLOAD_H) byte to 0x02
+	{ 0x1D, 0x00 }, // Set the (PLOAD_L) byte to 0x00,
+				    //	thus total payload is 0x0200 * 4 = 2040 bytes
 
-	{ 0x1d, 0x02 },/* frame size */		// jfrancois / linuxtv.org/hg/v4l-dvb
-	{ 0x1d, 0x58 },/* frame size */
-	{ 0x1d, 0x00 }, /* frame size */
+	{ 0x1D, 0x02 }, // Set the (FRAME_H) byte to 0x02
+	{ 0x1D, 0x58 }, // Set the (FRAME_M) byte to 0x52
+	{ 0x1D, 0x00 }, // Set the (FRAME_L) byte to 0x00
+					//  thus total frame size is 0x025800 = 153600 bytes
 
-	// ---------
-
-	{ 0x1c, 0x0a },
-	{ 0x1d, 0x08 }, /* turn on UVC header */
-	{ 0x1d, 0x0e }, /* .. */
-
-	{ 0x8d, 0x1c },
-	{ 0x8e, 0x80 },
-	{ 0xe5, 0x04 },
-
-	// ----------------
-	//	{ 0xc0, 0x28 },//	kwasy / macam
-	//	{ 0xc1, 0x1e },//
-
-	{ 0xc0, 0x50 },		// jfrancois
-	{ 0xc1, 0x3c },
-	{ 0xc2, 0x0c },
+	{ 0x1C, 0x0A }, // Set the video data offset to 0x0A
+	{ 0x1D, 0x08 }, // Set the (V_CNTL0) byte to default 0x08, i.e. compression header (UVC) format enable.
+	{ 0x1D, 0x0E }, // Set the (V_CNTL1) byte to default 0x0E, i.e. auto frame size enable.
 
 
+	{ 0x8D, 0x1C },
+	{ 0x8E, 0x80 },
+	{ OV534_REG_CAMERA_CLK, 0x04 }, // Select the default camera clock.
+
+	{ 0xC0, 0x50 }, // happens at end of VGA start
+	{ 0xC1, 0x3C }, // happens at end of VGA start
+	{ 0xC2, 0x0C }, // 12 // happens at beginning / end
 
 };
 
 
-const uint16_t PS3EYECam::VENDOR_ID = 0x1415;
-const uint16_t PS3EYECam::PRODUCT_ID = 0x2000;
-
-// PS3EYECam
-
 bool PS3EYECam::devicesEnumerated = false;
-std::vector<PS3EYECam::PS3EYERef> PS3EYECam::devices;
+std::vector<std::shared_ptr<PS3EYECam>> PS3EYECam::devices;
 
-const std::vector<PS3EYECam::PS3EYERef>& PS3EYECam::getDevices( bool forceRefresh )
+	
+const std::vector<std::shared_ptr<PS3EYECam>>& PS3EYECam::getDevices(bool forceRefresh)
 {
-	if( devicesEnumerated && ( ! forceRefresh ) )
+	if (devicesEnumerated && (!forceRefresh))
 		return devices;
 
 	devices.clear();
 
-	USBMgr::instance()->sTotalDevices = USBMgr::instance()->listDevices(devices);
+	USBManager::instance()->sTotalDevices = USBManager::instance()->listDevices(devices);
 
 	devicesEnumerated = true;
 	return devices;
 }
 
+
 bool PS3EYECam::updateDevices()
 {
-	return USBMgr::instance()->handleEvents();
+	return USBManager::instance()->handleEvents();
 }
 
-PS3EYECam::PS3EYECam(libusb_device *device)
+
+PS3EYECam::PS3EYECam(libusb_device *device):
+	autogain(false),
+	gain(20),
+	exposure(120),
+	sharpness(0),
+	hue(143),
+	awb(false),
+	brightness(20),
+	contrast(37),
+	blueblc(128),
+	redblc(128),
+	greenblc(128),
+	flip_h(false),
+	flip_v(false),
+	handle_(nullptr),
+	is_streaming(false),
+	device_(device),
+	urb(std::make_shared<URBDesc>())
 {
-	// default controls
-	autogain = false;
-	gain = 20;
-	exposure = 120;
-	sharpness = 0;
-	hue = 143;
-	awb = false;
-	brightness = 20;
-	contrast =  37;
-	blueblc = 128;
-	redblc = 128;
-	greenblc = 128;
-	flip_h = false;
-	flip_v = false;
-
-	usb_buf = NULL;
-	handle_ = NULL;
-
-	is_streaming = false;
-
-	device_ = device;
-	mgrPtr = USBMgr::instance();
-	urb = std::make_shared<URBDesc>();
 }
+
 
 PS3EYECam::~PS3EYECam()
 {
 	stop();
-	release();
+
+	if (handle_ != nullptr)
+	{
+		debug("closing device\n");
+		libusb_release_interface(handle_, 0);
+		libusb_close(handle_);
+		libusb_unref_device(device_);
+		handle_ = nullptr;
+		device_ = nullptr;
+		debug("device closed\n");
+	}
 }
 
-void PS3EYECam::release()
-{
-	if(handle_ != NULL)
-		close_usb();
-	if(usb_buf)
-		free(usb_buf);
-}
 
 bool PS3EYECam::init(uint32_t width, uint32_t height, uint8_t desiredFrameRate)
 {
 	uint16_t sensor_id;
 
 	// open usb device so we can setup and go
-	if(handle_ == NULL)
+	if (handle_ == nullptr)
 	{
-		if( !open_usb() )
+		// open, set first config and claim interface
+		int res = libusb_open(device_, &handle_);
+
+		if(res != 0)
 		{
+			debug("device open error: %d\n", res);
+			return false;
+		}
+
+		//libusb_set_configuration(handle_, 0);
+
+		res = libusb_claim_interface(handle_, 0);
+
+		if (res != 0)
+		{
+			debug("device claim interface error: %d\n", res);
 			return false;
 		}
 	}
 
-	//
-	if(usb_buf == NULL)
-		usb_buf = (uint8_t*)malloc(64);
-
 	// find best cam mode
-	if((width == 0 && height == 0) || width > 320 || height > 240)
+	if ((width == 0 && height == 0) || width > 320 || height > 240)
 	{
 		frame_width = 640;
 		frame_height = 480;
-	} else {
+	}
+	else
+	{
 		frame_width = 320;
 		frame_height = 240;
 	}
+
 	frame_rate = ov534_set_frame_rate(desiredFrameRate, true);
 	frame_stride = frame_width * 2;
 
@@ -641,26 +655,17 @@ bool PS3EYECam::init(uint32_t width, uint32_t height, uint8_t desiredFrameRate)
 	ov534_reg_write(OV534_REG_SYS_CTRL, 0x3a);
 	ov534_reg_write(OV534_REG_RESET0, 0x08);
 
-#if defined WIN32 || defined _WIN32 || defined WINCE
-	Sleep(100);
-#else
-	nanosleep((const struct timespec[]){{0, 100000000L}}, NULL);
-#endif
+	std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
-	/* initialize the sensor address */
-	ov534_reg_write(OV534_REG_ADDRESS, 0x42);
+	// initialize the sensor address
+	ov534_reg_write(OV534_REG_MS_ID, OV772X_SLAVE_ADDRESS_WRITE);
 
-	/* reset sensor */
+	// reset sensor
 	sccb_reg_write(OV772X_REG_COM7, 0x80);
 
+	std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
-#if defined WIN32 || defined _WIN32 || defined WINCE
-	Sleep(10);
-#else
-	nanosleep((const struct timespec[]){{0, 10000000L}}, NULL);
-#endif
-
-	/* probe the sensor */
+	// probe the sensor
 	sccb_reg_read(OV772X_REG_PID);
 	sensor_id = sccb_reg_read(OV772X_REG_PID) << 8;
 
@@ -683,7 +688,7 @@ bool PS3EYECam::init(uint32_t width, uint32_t height, uint8_t desiredFrameRate)
 
 void PS3EYECam::start()
 {
-	if(is_streaming) return;
+	if (is_streaming) return;
 
 	if (frame_width == 320)
 	{	/* 320x240 */
@@ -714,7 +719,7 @@ void PS3EYECam::start()
 	ov534_reg_write(OV534_REG_RESET0, 0x00); // start stream
 
 	// init and start urb
-	urb->start_transfers(handle_, frame_stride*frame_height);
+	urb->start_transfers(handle_, frame_stride * frame_height);
 
 	last_qued_frame_time = std::chrono::time_point<std::chrono::high_resolution_clock>();
 
@@ -746,11 +751,11 @@ void PS3EYECam::setAutogain(bool val)
 	autogain = val;
 
 	if (val) {
-		sccb_reg_write(OV772X_REG_COM8, 0xf7); //AGC,AEC,AWB ON
+		sccb_reg_write(OV772X_REG_COM8, 0xF7); //AGC,AEC,AWB ON
 		sccb_reg_write(OV772X_REG_DSP_CTRL1,
 					   sccb_reg_read(OV772X_REG_DSP_CTRL1) | 0x03);
 	} else {
-		sccb_reg_write(OV772X_REG_COM8, 0xf0); //AGC,AEC,AWB OFF
+		sccb_reg_write(OV772X_REG_COM8, 0xF0); //AGC,AEC,AWB OFF
 		sccb_reg_write(OV772X_REG_DSP_CTRL1,
 					   sccb_reg_read(OV772X_REG_DSP_CTRL1) & 0xFC);
 
@@ -945,12 +950,14 @@ bool PS3EYECam::isStreaming() const
 
 bool PS3EYECam::isNewFrame() const
 {
-	if(last_qued_frame_time < urb->last_frame_time)
+	if (last_qued_frame_time < urb->last_frame_time)
 	{
 		return true;
 	}
+
 	return false;
 }
+
 
 const uint8_t* PS3EYECam::getLastFramePointer()
 {
@@ -1005,7 +1012,7 @@ bool PS3EYECam::open_usb()
 	
 	res = libusb_claim_interface(handle_, 0);
 
-	if(res != 0)
+	if (res != 0)
 	{
 		debug("device claim interface error: %d\n", res);
 		return false;
@@ -1014,17 +1021,6 @@ bool PS3EYECam::open_usb()
 	return true;
 }
 
-
-void PS3EYECam::close_usb()
-{
-	debug("closing device\n");
-	libusb_release_interface(handle_, 0);
-	libusb_close(handle_);
-	libusb_unref_device(device_);
-	handle_ = NULL;
-	device_ = NULL;
-	debug("device closed\n");
-}
 
 void PS3EYECam::ov534_set_led(bool status)
 {
@@ -1062,7 +1058,7 @@ uint8_t PS3EYECam::ov534_set_frame_rate(uint8_t frame_rate, bool dry_run)
 		uint8_t fps; // Human readable fps.
 		uint8_t r11; // Register OV772X_REG_CLCRC value. Register CLKRC, Internal Clock.
 		uint8_t r0d; // Register OV772X_REG_COM4 value. Register COM4, PLL control and AEC Evaluate window.
-		uint8_t re5; // Register 0xE5 value. ?
+		uint8_t re5; // Register OV534_REG_CAMERA_CLK value. ?
 	};
 
 	const struct rate_s *r;
@@ -1087,6 +1083,7 @@ uint8_t PS3EYECam::ov534_set_frame_rate(uint8_t frame_rate, bool dry_run)
 		{50, 0x02, 0x41, 0x04},
 		{37, 0x03, 0x41, 0x04},
 		{30, 0x04, 0x41, 0x04},
+		{15, 0x04, 0x41, 0x04}
 	};
 	
 	if (frame_width == 640)
@@ -1188,9 +1185,9 @@ int PS3EYECam::sccb_check_status()
 void PS3EYECam::sccb_reg_write(uint8_t reg, uint8_t val)
 {
 	//debug("reg: 0x%02x, val: 0x%02x", reg, val);
-	ov534_reg_write(OV534_REG_SUBADDR, reg);
-	ov534_reg_write(OV534_REG_WRITE, val);
-	ov534_reg_write(OV534_REG_OPERATION, OV534_OP_WRITE_3);
+	ov534_reg_write(OV534_REG_MS_ADDRESS, reg);
+	ov534_reg_write(OV534_REG_DO, val);
+	ov534_reg_write(OV534_REG_CTRL, OV534_OP_WRITE_3);
 	
 	if (!sccb_check_status())
 		debug("sccb_reg_write failed\n");
@@ -1199,17 +1196,18 @@ void PS3EYECam::sccb_reg_write(uint8_t reg, uint8_t val)
 
 uint8_t PS3EYECam::sccb_reg_read(uint16_t reg)
 {
-	ov534_reg_write(OV534_REG_SUBADDR, reg);
-	ov534_reg_write(OV534_REG_OPERATION, OV534_OP_WRITE_2);
+	ov534_reg_write(OV534_REG_MS_ADDRESS, reg);
+	ov534_reg_write(OV534_REG_CTRL, OV534_OP_WRITE_2);
 
 	if (!sccb_check_status())
 		debug("sccb_reg_read failed 1\n");
 	
-	ov534_reg_write(OV534_REG_OPERATION, OV534_OP_READ_2);
+	ov534_reg_write(OV534_REG_CTRL, OV534_OP_READ_2);
+
 	if (!sccb_check_status())
 		debug( "sccb_reg_read failed 2\n");
 	
-	return ov534_reg_read(OV534_REG_READ);
+	return ov534_reg_read(OV534_REG_DI);
 }
 
 

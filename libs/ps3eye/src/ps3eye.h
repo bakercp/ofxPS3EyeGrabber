@@ -12,6 +12,7 @@
 #include <memory>
 #include "libusb.h"
 
+
 #define DEBUG 1
 
 
@@ -22,20 +23,16 @@
 #endif
 
 
-class USBMgr;
+class USBManager;
 class URBDesc;
 
 
 namespace ps3eye {
 
+
 class PS3EYECam
 {
 public:
-	typedef std::shared_ptr<PS3EYECam> PS3EYERef;
-
-	static const uint16_t VENDOR_ID;
-	static const uint16_t PRODUCT_ID;
-
 	PS3EYECam(libusb_device *device);
 	~PS3EYECam();
 
@@ -52,8 +49,6 @@ public:
 	bool getAutoWhiteBalance() const;
 	void setAutoWhiteBalance(bool val);
 	uint8_t getGain() const;
-
-
 	void setGain(uint8_t val);
 	uint8_t getExposure() const;
 	void setExposure(uint8_t val);
@@ -74,7 +69,6 @@ public:
 
 	void setFlip(bool horizontal = false, bool vertical = false);
 
-
 	bool isStreaming() const;
 	bool isNewFrame() const;
 	const uint8_t* getLastFramePointer();
@@ -86,16 +80,20 @@ public:
 
 	void setLED(bool enable);
 
-	//
-	static const std::vector<PS3EYERef>& getDevices( bool forceRefresh = false );
+	static const std::vector<std::shared_ptr<PS3EYECam>>& getDevices( bool forceRefresh = false );
 	static bool updateDevices();
 
-	
+	enum
+	{
+		VENDOR_ID = 0x1415,
+		PRODUCT_ID = 0x2000
+	};
+
 private:
 	PS3EYECam(const PS3EYECam&);
 	void operator=(const PS3EYECam&);
 
-	void release();
+//	void release();
 
 	// usb ops
 	uint8_t ov534_set_frame_rate(uint8_t frame_rate, bool dry_run = false);
@@ -134,11 +132,9 @@ private:
 	bool flip_v;
 
 	bool is_streaming;
-	
-	std::shared_ptr<USBMgr> mgrPtr;
-	
+		
 	static bool devicesEnumerated;
-	static std::vector<PS3EYERef> devices;
+	static std::vector<std::shared_ptr<PS3EYECam>> devices;
 	
 	uint32_t frame_width;
 	uint32_t frame_height;
@@ -150,13 +146,12 @@ private:
 	//usb stuff
 	libusb_device *device_;
 	libusb_device_handle *handle_;
-	uint8_t *usb_buf;
+	uint8_t usb_buf[64];
 	
 	std::shared_ptr<URBDesc> urb;
 	
 	bool open_usb();
-	void close_usb();
-	
+
 };
 
 } // namespace
