@@ -1,3 +1,6 @@
+// From: https://github.com/inspirit/PS3EYEDriver/
+
+
 #pragma once
 
 
@@ -74,6 +77,9 @@ public:
 	uint8_t frame_work_ind;
 
 	std::chrono::time_point<std::chrono::high_resolution_clock> last_frame_time;
+
+	std::chrono::duration<double> frameDuration;
+	double smoothFrameDuration = -1;
 
 
 };

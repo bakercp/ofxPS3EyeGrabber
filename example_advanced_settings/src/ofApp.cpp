@@ -1,6 +1,6 @@
 // =============================================================================
 //
-// Copyright (c) 2014 Christopher Baker <http://christopherbaker.net>
+// Copyright (c) 2014-2015 Christopher Baker <http://christopherbaker.net>
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -26,8 +26,46 @@
 #include "ofApp.h"
 
 
-int main()
+void ofApp::setup()
 {
-    ofSetupOpenGL(640, 480, OF_WINDOW);
-    ofRunApp(new ofApp());
+    ofSetVerticalSync(true);
+
+    std::vector<ofVideoDevice> devices = grabber.listDevices();
+
+	if (!devices.empty())
+	{
+		grabber.setGrabber(std::make_shared<ofxPS3EyeGrabber>());
+		grabber.setDeviceID(0);
+		grabber.setPixelFormat(OF_PIXELS_NATIVE);
+		grabber.setDesiredFrameRate(60);
+		grabber.setup(640, 480);
+
+        // Set PS3EyeGrabber specific paramaters.
+		grabber.getGrabber<ofxPS3EyeGrabber>()->setAutogain(true);
+		grabber.getGrabber<ofxPS3EyeGrabber>()->setAutoWhiteBalance(true);
+	}
+}
+
+
+void ofApp::update()
+{
+	grabber.update();
+}
+
+
+void ofApp::draw()
+{
+    ofBackground(0);
+    ofSetColor(255);
+
+    grabber.draw(0, 0);
+
+    std::stringstream ss;
+
+    ss << " App FPS: " << ofGetFrameRate() << std::endl;
+	ss << " Cam FPS: " << grabber.getGrabber<ofxPS3EyeGrabber>()->getFPS()  << std::endl;
+	ss << "Real FPS: " << grabber.getGrabber<ofxPS3EyeGrabber>()->getActualFPS();
+
+    ofDrawBitmapStringHighlight(ss.str(), ofPoint(10, 15));
+
 }

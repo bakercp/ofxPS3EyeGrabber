@@ -1,3 +1,5 @@
+// From: https://github.com/inspirit/PS3EYEDriver/
+
 #include "USBManager.h"
 #include <iostream>
 
@@ -210,7 +212,21 @@ void URBDesc::frame_add(enum gspca_packet_type packet_type,
 
 	if (packet_type == LAST_PACKET)
 	{
-		last_frame_time = std::chrono::high_resolution_clock::now();
+
+		std::chrono::time_point<std::chrono::high_resolution_clock> now = std::chrono::high_resolution_clock::now();
+		frameDuration = now - last_frame_time;
+
+//		if (0 > smoothFrameDuration)
+//		{
+//			smoothFrameDuration = frameDuration.count();
+//		}
+//		else
+//		{
+			smoothFrameDuration = frameDuration.count() * 0.5 + smoothFrameDuration * 0.5;
+//		}
+
+
+		last_frame_time = now;
 		frame_complete_ind = frame_work_ind;
 		frame_work_ind = (frame_work_ind + 1) & 15;
 		frame_data_len = 0;

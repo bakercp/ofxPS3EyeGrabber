@@ -13,7 +13,7 @@
 #include "libusb.h"
 
 
-#define DEBUG 1
+//#define DEBUG 1
 
 
 #if defined(DEBUG)
@@ -67,16 +67,21 @@ public:
 	uint8_t getGreenBalance() const;
 	void setGreenBalance(uint8_t val);
 
-	void setFlip(bool horizontal = false, bool vertical = false);
+	void setVerticalFlip(bool enable);
+	void setHorizontalFlip(bool enable);
+	void setTestPattern(bool enable);
 
 	bool isStreaming() const;
 	bool isNewFrame() const;
-	const uint8_t* getLastFramePointer();
+	const uint8_t* getLastFramePointer() const;
+	uint8_t* getLastFramePointer();
 
 	uint32_t getWidth() const;
 	uint32_t getHeight() const;
 	uint8_t getFrameRate() const;
 	uint32_t getRowBytes() const;
+
+	double getActualFrameRate() const;
 
 	void setLED(bool enable);
 
@@ -108,7 +113,7 @@ private:
 	uint8_t sccb_reg_read(uint16_t reg);
 
 	// output a bridge sequence (reg - val)
-	void reg_w_array(const uint8_t (*data)[2], int len);
+	void ov534_w_array(const uint8_t (*data)[2], int len);
 
 	// output a sensor sequence (reg - val)
 	void sccb_w_array(const uint8_t (*data)[2], int len);
@@ -130,6 +135,7 @@ private:
 
 	bool flip_h;
 	bool flip_v;
+	bool testPattern;
 
 	bool is_streaming;
 		
@@ -141,7 +147,7 @@ private:
 	uint32_t frame_stride;
 	uint8_t frame_rate;
 	
-	std::chrono::time_point<std::chrono::high_resolution_clock> last_qued_frame_time;
+	mutable std::chrono::time_point<std::chrono::high_resolution_clock> last_qued_frame_time;
 	
 	//usb stuff
 	libusb_device *device_;

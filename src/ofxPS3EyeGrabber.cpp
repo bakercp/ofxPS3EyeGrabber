@@ -47,16 +47,15 @@ void ofxPS3EyeGrabber::yuv422_to_rgba(const uint8_t* yuv_src,
 
     const int uidx = 1 - yIdx + uIdx * 2;
     const int vidx = (2 + uidx) % 4;
-    int j, i;
 
 #define _max(a, b) (((a) > (b)) ? (a) : (b))
 #define _saturate(v) static_cast<uint8_t>(static_cast<uint32_t>(v) <= 0xff ? v : v > 0 ? 0xff : 0)
 
-    for (j = 0; j < height; j++, yuv_src += stride)
+    for (int j = 0; j < height; j++, yuv_src += stride)
     {
         uint8_t* row = dst + (width * 4) * j; // 4 channels
 
-        for (i = 0; i < 2 * width; i += 4, row += 8)
+        for (int i = 0; i < 2 * width; i += 4, row += 8)
         {
             int u = static_cast<int>(yuv_src[i + uidx]) - 128;
             int v = static_cast<int>(yuv_src[i + vidx]) - 128;
@@ -84,7 +83,8 @@ void ofxPS3EyeGrabber::yuv422_to_rgba(const uint8_t* yuv_src,
 ofxPS3EyeGrabber::ofxPS3EyeGrabber():
     _deviceId(0),
     _desiredFrameRate(60),
-    _isFrameNew(true)
+    _isFrameNew(true),
+	_pixelFormat(OF_PIXELS_RGBA)
 {
     ofAddListener(ofEvents().exit, this, &ofxPS3EyeGrabber::exit);
 }
@@ -137,10 +137,13 @@ bool ofxPS3EyeGrabber::setup(int w, int h)
 
             if (success)
             {
-                // We allocate the actual dimensions as they are restricted.
-                _pixels.allocate(_cam->getWidth(),
-                                 _cam->getHeight(),
-                                 OF_PIXELS_RGBA);
+				if (_pixelFormat == OF_PIXELS_RGBA)
+				{
+					_pixels.allocate(_cam->getWidth(),
+									 _cam->getHeight(),
+									 OF_PIXELS_RGBA);
+				}
+
                 start();
                 return true;
             }
@@ -151,13 +154,13 @@ bool ofxPS3EyeGrabber::setup(int w, int h)
         }
         else
         {
-            ofLogWarning("ofxPS3EyeGrabber::initGrabber") << "Device id is out of range: " << _deviceId;
+            ofLogWarning("ofxPS3EyeGrabber::setup") << "Device id is out of range: " << _deviceId;
             return false;
         }
     }
     else
     {
-        ofLogWarning("ofxPS3EyeGrabber::initGrabber") << "Camera is already initialized.";
+        ofLogWarning("ofxPS3EyeGrabber::setup") << "Camera is already initialized.";
         return false;
     }
 }
@@ -171,15 +174,25 @@ void ofxPS3EyeGrabber::update()
     {
         if (_cam->isNewFrame())
         {
-            yuv422_to_rgba(_cam->getLastFramePointer(),
-                           _cam->getRowBytes(),
-                           _pixels.getData(),
-                           _cam->getWidth(),
-                           _cam->getHeight());
+			if (_pixelFormat == OF_PIXELS_RGBA)
+			{
+				yuv422_to_rgba(_cam->getLastFramePointer(),
+							   _cam->getRowBytes(),
+							   _pixels.getData(),
+							   _cam->getWidth(),
+							   _cam->getHeight());
+			}
+			else
+			{
+				_pixels.setFromExternalPixels(_cam->getLastFramePointer(),
+											  _cam->getWidth(),
+											  _cam->getHeight(),
+											  OF_PIXELS_YUY2);
+			}
 
             _isFrameNew = true;
 
-        }
+		}
     }
 }
 
@@ -206,6 +219,7 @@ const ofPixels& ofxPS3EyeGrabber::getPixels() const
 {
     return _pixels;
 }
+
 
 void ofxPS3EyeGrabber::close()
 {
@@ -243,8 +257,14 @@ float ofxPS3EyeGrabber::getWidth() const
 
 bool ofxPS3EyeGrabber::setPixelFormat(ofPixelFormat pixelFormat)
 {
-	if (pixelFormat == OF_PIXELS_RGBA)
+	if (pixelFormat == OF_PIXELS_NATIVE)
     {
+		_pixelFormat = OF_PIXELS_YUY2;
+		return true;
+	}
+	else if (pixelFormat == OF_PIXELS_YUY2 || pixelFormat == OF_PIXELS_RGBA)
+	{
+		_pixelFormat = pixelFormat;
 		return true;
 	}
     else
@@ -257,8 +277,7 @@ bool ofxPS3EyeGrabber::setPixelFormat(ofPixelFormat pixelFormat)
 
 ofPixelFormat ofxPS3EyeGrabber::getPixelFormat() const
 {
-    // Can we return this directly from ofPixels?
-    return OF_PIXELS_RGBA;
+    return _pixelFormat;
 }
 
 
@@ -583,16 +602,42 @@ void ofxPS3EyeGrabber::setGreenBalance(uint8_t val)
 }
 
 
-void ofxPS3EyeGrabber::setFlip(bool horizontal, bool vertical)
+void ofxPS3EyeGrabber::setVerticalFlip(bool enable)
 {
     if (_cam)
     {
-        _cam->setFlip(horizontal, vertical);
+        _cam->setVerticalFlip(enable);
     }
     else
     {
-        ofLogWarning("ofxPS3EyeGrabber::setFlip") << "Camera is not initialized.";
+        ofLogWarning("ofxPS3EyeGrabber::setVerticalFlip") << "Camera is not initialized.";
     }
+}
+
+
+void ofxPS3EyeGrabber::setHorizontalFlip(bool enable)
+{
+	if (_cam)
+	{
+		_cam->setHorizontalFlip(enable);
+	}
+	else
+	{
+		ofLogWarning("ofxPS3EyeGrabber::setHorizontalFlip") << "Camera is not initialized.";
+	}
+}
+
+
+void ofxPS3EyeGrabber::setTestPattern(bool enable)
+{
+	if (_cam)
+	{
+		_cam->setTestPattern(enable);
+	}
+	else
+	{
+		ofLogWarning("ofxPS3EyeGrabber::setTestPattern") << "Camera is not initialized.";
+	}
 }
 
 
@@ -622,6 +667,21 @@ float ofxPS3EyeGrabber::getFPS() const
         return 0;
     }
 }
+
+
+float ofxPS3EyeGrabber::getActualFPS() const
+{
+	if (_cam)
+	{
+		return _cam->getActualFrameRate();
+	}
+	else
+	{
+		ofLogWarning("ofxPS3EyeGrabber::getActualFPS") << "Camera is not initialized.";
+		return 0;
+	}
+}
+
 
 
 void ofxPS3EyeGrabber::exit(ofEventArgs& args)

@@ -1,6 +1,6 @@
 // =============================================================================
 //
-// Copyright (c) 2014 Christopher Baker <http://christopherbaker.net>
+// Copyright (c) 2014-2015 Christopher Baker <http://christopherbaker.net>
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -23,25 +23,15 @@
 // =============================================================================
 
 
-#pragma once
+#include "ofApp.h"
 
 
-#include "ofMain.h"
-#include "ofxPS3EyeGrabber.h"
-
-
-class ofApp: public ofBaseApp
+int main()
 {
-public:
-    void setup();
-    void update();
-    void draw();
-
-    ofxPS3EyeGrabber vidGrabber;
-    ofTexture videoTexture;
-
-    int camWidth;
-    int camHeight;
-    int camFrameRate;
-
-};
+	ofGLWindowSettings settings;
+	settings.setGLVersion(3, 2);
+	settings.width = 640;
+	settings.height = 480;
+	ofCreateWindow(settings);
+	ofRunApp(std::make_shared<ofApp>());
+}

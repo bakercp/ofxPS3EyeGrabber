@@ -136,7 +136,7 @@ namespace ps3eye {
 #define OV772X_REG_COM5 0x0E
 #define OV772X_REG_COM6 0x0F
 #define OV772X_REG_AEC 0x10 // Exposure value - Auto-exposure control, related to AECH
-#define OV772X_REG_CLCRC 0x11
+#define OV772X_REG_CLKRC 0x11
 #define OV772X_REG_COM7 0x12
 #define OV772X_REG_COM8 0x13 // Common control, AGC, AWB, AEC, etc.
 #define OV772X_REG_COM9 0x14
@@ -164,7 +164,7 @@ namespace ps3eye {
 #define OV772X_REG_HOUTSIZE 0x29
 
 #define OV772X_REG_EXHCH 0x2A
-#define OV772X_REG_EXHCL 0x2B
+#define OV772X_REG_EXHCL 0x2B // frequency filter
 #define	OV772X_REG_VOUTSIZE 0x2C
 
 #define	OV772X_REG_ADVFL 0x2D
@@ -368,19 +368,19 @@ namespace ps3eye {
 static const uint8_t ov772x_reg_initdata[][2] = {
 
 	{OV772X_REG_COM7, 0x80 }, // Reset all registers to the default values.
-	{OV772X_REG_CLCRC, 0x01 },
+	{OV772X_REG_CLKRC, 0x01 },
 	
 	// used for a delay begin
-        {OV772X_REG_CLCRC, 0x01 },
-        {OV772X_REG_CLCRC, 0x01 },
-        {OV772X_REG_CLCRC, 0x01 },
-        {OV772X_REG_CLCRC, 0x01 },
-        {OV772X_REG_CLCRC, 0x01 },
-        {OV772X_REG_CLCRC, 0x01 },
-        {OV772X_REG_CLCRC, 0x01 },
-        {OV772X_REG_CLCRC, 0x01 },
-        {OV772X_REG_CLCRC, 0x01 },
-        {OV772X_REG_CLCRC, 0x01 },
+        {OV772X_REG_CLKRC, 0x01 },
+        {OV772X_REG_CLKRC, 0x01 },
+        {OV772X_REG_CLKRC, 0x01 },
+        {OV772X_REG_CLKRC, 0x01 },
+        {OV772X_REG_CLKRC, 0x01 },
+        {OV772X_REG_CLKRC, 0x01 },
+        {OV772X_REG_CLKRC, 0x01 },
+        {OV772X_REG_CLKRC, 0x01 },
+        {OV772X_REG_CLKRC, 0x01 },
+        {OV772X_REG_CLKRC, 0x01 },
 	// used for a delay end
 
 	{ OV772X_REG_COM12, 0x03 },
@@ -394,7 +394,7 @@ static const uint8_t ov772x_reg_initdata[][2] = {
 	{ OV772X_REG_HOUTSIZE, 0xA0 }, // VGA
 	{ OV772X_REG_VOUTSIZE, 0xF0 }, // VGA
 	{ OV772X_REG_DSP_CTRL2, 0x20 },
-	{ OV772X_REG_CLCRC, 0x01 },
+	{ OV772X_REG_CLKRC, 0x01 },
 	{ OV772X_REG_TGT_B, 0x7F },
 	{ OV772X_REG_AWB_CTRL0, 0xAA }, //
 	{ OV772X_REG_DSP_CTRL1, 0xFF },
@@ -462,13 +462,13 @@ static const uint8_t ov772x_reg_initdata[][2] = {
 	{ OV772X_REG_BDBASE, 0x7f },
 	{ OV772X_REG_DBSTEP, 0x03 },
 
-	{ OV772X_REG_CLCRC, 0x01 },
+	{ OV772X_REG_CLKRC, 0x01 },
 	{ OV772X_REG_COM3, 0xd0 },
 	{ OV772X_REG_DSP_CTRL1, 0xff },
 	{ OV772X_REG_COM4, 0x41 },
 
 	{ OV772X_REG_COM9, 0x41 },
-	{ OV772X_REG_COM5, 0xCD },
+	{ OV772X_REG_COM5, 0xCD }, // Auto frame rate control.
 	{ OV772X_REG_AWB_DSPAUTO, 0xBF },
 	{ OV772X_REG_AWB_DNSTH, 0x00 },	// De-noise threshold - jfrancois 0x00 - orig 0x04, default 00
 	{ OV772X_REG_COM3, 0xd0 }   // COM3, default 00, 0xd0 = 11010000
@@ -567,7 +567,6 @@ const std::vector<std::shared_ptr<PS3EYECam>>& PS3EYECam::getDevices(bool forceR
 bool PS3EYECam::updateDevices()
 {
 	return urb->handleEvents();
-//	return USBManager::instance().handleEvents();
 }
 
 
@@ -585,6 +584,7 @@ PS3EYECam::PS3EYECam(libusb_device *device):
 	greenblc(128),
 	flip_h(false),
 	flip_v(false),
+	testPattern(false),
 	handle_(nullptr),
 	is_streaming(false),
 	device_(device),
@@ -677,8 +677,8 @@ bool PS3EYECam::init(uint32_t width, uint32_t height, uint8_t desiredFrameRate)
 
 	debug("Sensor ID: %04x\n", sensor_id);
 
-	/* initialize */
-	reg_w_array(ov534_reg_initdata, ARRAY_SIZE(ov534_reg_initdata));
+	// initialize
+	ov534_w_array(ov534_reg_initdata, ARRAY_SIZE(ov534_reg_initdata));
 	ov534_set_led(1);
 	sccb_w_array(ov772x_reg_initdata, ARRAY_SIZE(ov772x_reg_initdata));
 	ov534_reg_write(OV534_REG_RESET0, 0x09);
@@ -692,12 +692,13 @@ void PS3EYECam::start()
 	if (is_streaming) return;
 
 	if (frame_width == 320)
-	{	/* 320x240 */
-		reg_w_array(bridge_start_qvga, ARRAY_SIZE(bridge_start_qvga));
+	{	// 320x240
+		ov534_w_array(bridge_start_qvga, ARRAY_SIZE(bridge_start_qvga));
 		sccb_w_array(sensor_start_qvga, ARRAY_SIZE(sensor_start_qvga));
-	} else
-	{		/* 640x480 */
-		reg_w_array(bridge_start_vga, ARRAY_SIZE(bridge_start_vga));
+	}
+	else
+	{	// 640x480
+		ov534_w_array(bridge_start_vga, ARRAY_SIZE(bridge_start_vga));
 		sccb_w_array(sensor_start_vga, ARRAY_SIZE(sensor_start_vga));
 	}
 
@@ -714,7 +715,9 @@ void PS3EYECam::start()
 	setRedBalance(redblc);
 	setBlueBalance(blueblc);
 	setGreenBalance(greenblc);
-	setFlip(flip_h, flip_v);
+	setHorizontalFlip(flip_h);
+	setVerticalFlip(flip_v);
+	setTestPattern(testPattern);
 
 	ov534_set_led(1);
 	ov534_reg_write(OV534_REG_RESET0, 0x00); // start stream
@@ -764,6 +767,7 @@ void PS3EYECam::setAutogain(bool val)
 		setExposure(exposure);
 	}
 }
+	
 
 bool PS3EYECam::getAutoWhiteBalance() const
 {
@@ -925,20 +929,52 @@ void PS3EYECam::setGreenBalance(uint8_t val)
 }
 
 
-void PS3EYECam::setFlip(bool horizontal, bool vertical)
+void PS3EYECam::setVerticalFlip(bool enable)
 {
-	flip_h = horizontal;
-	flip_v = vertical;
+	flip_v = enable;
 
 	uint8_t val = sccb_reg_read(OV772X_REG_COM3);
 
-	val &= ~0b11000000; // Clear bits.
+	val &= ~0b10000000;
 
-	if (!horizontal)
-		val |= 0b01000000; // 0x40;
-
-	if (!vertical)
+	if (!flip_v)
+	{
 		val |= 0b10000000; // 0x80;
+	}
+
+	sccb_reg_write(OV772X_REG_COM3, val);
+}
+
+
+void PS3EYECam::setHorizontalFlip(bool enable)
+{
+	flip_h = enable;
+
+	uint8_t val = sccb_reg_read(OV772X_REG_COM3);
+
+	val &= ~0b01000000;
+
+	if (!flip_h)
+	{
+		val |= 0b01000000; // 0x80;
+	}
+
+	sccb_reg_write(OV772X_REG_COM3, val);
+}
+
+
+void PS3EYECam::setTestPattern(bool enable)
+{
+	testPattern = enable;
+
+	uint8_t val = sccb_reg_read(OV772X_REG_COM3);
+
+	val &= ~0b00000001;
+
+	if (testPattern)
+	{
+		val |= 0b00000001; // 0x80;
+	}
 
 	sccb_reg_write(OV772X_REG_COM3, val);
 }
@@ -960,10 +996,18 @@ bool PS3EYECam::isNewFrame() const
 }
 
 
-const uint8_t* PS3EYECam::getLastFramePointer()
+const uint8_t* PS3EYECam::getLastFramePointer() const
 {
 	last_qued_frame_time = urb->last_frame_time;
 	const uint8_t* frame = const_cast<uint8_t*>(urb->frame_buffer + urb->frame_complete_ind * urb->frame_size);
+	return frame;
+}
+
+
+uint8_t* PS3EYECam::getLastFramePointer()
+{
+	last_qued_frame_time = urb->last_frame_time;
+	uint8_t* frame = urb->frame_buffer + urb->frame_complete_ind * urb->frame_size;
 	return frame;
 }
 
@@ -984,6 +1028,13 @@ uint8_t PS3EYECam::getFrameRate() const
 {
 	return frame_rate;
 }
+
+
+double PS3EYECam::getActualFrameRate() const
+{
+	return 1.0 / urb->smoothFrameDuration;
+}
+
 
 
 uint32_t PS3EYECam::getRowBytes() const
@@ -1057,34 +1108,149 @@ uint8_t PS3EYECam::ov534_set_frame_rate(uint8_t frame_rate, bool dry_run)
 	int i;
 	struct rate_s {
 		uint8_t fps; // Human readable fps.
-		uint8_t r11; // Register OV772X_REG_CLCRC value. Register CLKRC, Internal Clock.
+		uint8_t r11; // Register OV772X_REG_CLKRC value. Register CLKRC, Internal Clock.
+						// Internal clock
+						// Range, 0x00-0x1F (0-31).
+
 		uint8_t r0d; // Register OV772X_REG_COM4 value. Register COM4, PLL control and AEC Evaluate window.
 		uint8_t re5; // Register OV534_REG_CAMERA_CLK value. ?
 	};
 
 	const struct rate_s *r;
 
+
+	// clock output 24 000 000 Hz.
+
+	// pixels 640 x 480 x 3 = 921600
+
+	// YUV422    4 bytes per 2 pixels  ( 8 bytes per 4 pixels)
+
+	// total bits = 640 x 480 / 4 * 8 -> 307200 bits ~ 78.125
+
 	static const struct rate_s rate_0[] = { /* 640x480 */
-		{60, 0x01, 0xc1, 0x04},
-		{50, 0x01, 0x41, 0x02},
-		{40, 0x02, 0xc1, 0x04},
-		{30, 0x04, 0x81, 0x02},
-		{15, 0x03, 0x41, 0x04},
+		{60,
+			0x01, // input clock / (0x01 + 1)
+			0xC1, // 193 0b11000001 PLL 8x
+			0x04  //  4  0b00000100
+		},
+		{50,
+			0x01, // input clock / (0x01 + 1)
+			0x41, // 65 0b01000001 PLL 4x
+			0x02  //  2 0b00000010
+		},
+		{40,
+			0x02, // input clock / (0x02 + 1)
+			0xC1, // 193 0b11000001 PLL 8x
+			0x04  //  4  0b00000100
+		},
+		{30,
+			0x04, // input clock / (0x04 + 1)
+			0x81, // 129 0b10000001 PLL 6x
+			0x02  //  2 0b00000010
+		},
+		{15, // 1500000
+			0x03, // input clock / (0x03 + 1)
+			0x41, // 65 0b01000001 PLL 4x
+			0x04  // 4  0b00000100
+		},
+		{10, // 1500000
+			0x05,
+			0x41,
+			0x04
+		},
+		{5, // 1500000
+			0x0B,
+			0x41,
+			0x04
+		},
+		{1, // 1500000
+			0x0E,
+			0x00,
+			0x04
+		},
 	};
 
 	static const struct rate_s rate_1[] = { /* 320x240 */
-		{205, 0x01, 0xc1, 0x02}, /* 205 FPS: video is partly corrupt */
-		{187, 0x01, 0x81, 0x02}, /* 187 FPS or below: video is valid */
-		{150, 0x01, 0xc1, 0x04},
-		{137, 0x02, 0xc1, 0x02},
-		{125, 0x02, 0x81, 0x02},
-		{100, 0x02, 0xc1, 0x04},
-		{75, 0x03, 0xc1, 0x04},
-		{60, 0x04, 0xc1, 0x04},
-		{50, 0x02, 0x41, 0x04},
-		{37, 0x03, 0x41, 0x04},
-		{30, 0x04, 0x41, 0x04},
-		{15, 0x04, 0x41, 0x04}
+		{205,
+			0x01,
+			0xC1, // 193 0b11000001
+			0x02  //  2 0b00000010
+		}, /* 205 FPS: video is partly corrupt */
+		{187,
+			0x01,
+			0x81, // 193 0b11000001
+			0x02  //  2 0b00000010
+		}, /* 187 FPS or below: video is valid */
+		{150,
+			0x01,
+			0xC1, // 193 0b11000001
+			0x04  // 4  0b00000100
+		},
+		{137,
+			0x02,
+			0xC1, // 193 0b11000001
+			0x02  //  2 0b00000010
+		},
+		{125,
+			0x02,
+			0x81, // 129 0b10000001
+			0x02  //  2 0b00000010
+		},
+		{100,
+			0x02,
+			0xC1, // 193 0b11000001
+			0x04  // 4  0b00000100
+		},
+		{75,
+			0x03,
+			0xC1, // 193 0b11000001
+			0x04  // 4  0b00000100
+		},
+		{60,
+			0x04,
+			0xC1, // 193 0b11000001
+			0x04  // 4  0b00000100
+		},
+		{50,
+			0x02, //  3 0b00000011
+			0x41, // 65 0b01000001
+			0x04  // 4  0b00000100
+		},
+		{37,
+			0x03, //  3 0b00000011 
+			0x41, // 65 0b01000001
+			0x04  // 4  0b00000100
+		},
+		{30,
+			0x04, // 4  0b00000100
+			0x41, // 65 0b01000001
+			0x04  // 4  0b00000100
+		},
+		{25, // 1500000
+			0x05,
+			0x41, // 129 0b10000001
+			0x04 //  2 0b00000010
+		},
+//		{15, // 1500000
+//			0x01,
+//			0x00, // 129 0b10000001
+//			0x02 //  2 0b00000010
+//		},
+		{10, // 1500000
+			0x01,
+			0x00, // 129 0b10000001
+			0x08 //  2 0b00000010
+		},
+		{5, // 1500000
+			0x13,
+			0x01, // 129 0b10000001
+			0x08 //  2 0b00000010
+		},
+		{1, // 1500000
+			0x14,
+			0x01, // 129 0b10000001
+			0x08 //  2 0b00000010
+		},
 	};
 	
 	if (frame_width == 640)
@@ -1107,7 +1273,7 @@ uint8_t PS3EYECam::ov534_set_frame_rate(uint8_t frame_rate, bool dry_run)
 	
 	if (!dry_run)
 	{
-		sccb_reg_write(OV772X_REG_CLCRC, r->r11);
+		sccb_reg_write(OV772X_REG_CLKRC, r->r11);
 		sccb_reg_write(OV772X_REG_COM4, r->r0d);
 		ov534_reg_write(OV534_REG_CAMERA_CLK, r->re5);
 	}
@@ -1212,7 +1378,7 @@ uint8_t PS3EYECam::sccb_reg_read(uint16_t reg)
 }
 
 
-void PS3EYECam::reg_w_array(const uint8_t (*data)[2], int len)
+void PS3EYECam::ov534_w_array(const uint8_t (*data)[2], int len)
 {
 	while (--len >= 0)
 	{

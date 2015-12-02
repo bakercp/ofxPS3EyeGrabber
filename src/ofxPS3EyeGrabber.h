@@ -44,37 +44,22 @@ public:
     /// \brief Destroy the PS3EyeGrabber.
     virtual ~ofxPS3EyeGrabber();
 
-    std::vector<ofVideoDevice> listDevices() const;
-
-    bool setup(int w, int h);
-
-    void update();
-
-    bool isFrameNew() const;
-
-    bool isInitialized() const;
-
-    ofPixels& getPixels();
-
-    const ofPixels& getPixels() const;
-
-    void close();
-
-    float getHeight() const;
-
-    float getWidth() const;
-
-    bool setPixelFormat(ofPixelFormat pixelFormat);
-
-    ofPixelFormat getPixelFormat() const;
-
-    void setVerbose(bool verbose);
-
-    void setDeviceID(int deviceId);
-
-    void setDesiredFrameRate(int framerate);
-
-    void videoSettings();
+    std::vector<ofVideoDevice> listDevices() const override;
+    bool setup(int w, int h) override;
+    void update() override;
+    bool isFrameNew() const override;
+    bool isInitialized() const override;
+    ofPixels& getPixels() override;
+    const ofPixels& getPixels() const override;
+    void close() override;
+    float getHeight() const override;
+    float getWidth() const override;
+    bool setPixelFormat(ofPixelFormat pixelFormat) override;
+    ofPixelFormat getPixelFormat() const override;
+    void setVerbose(bool verbose) override;
+    void setDeviceID(int deviceId) override;
+    void setDesiredFrameRate(int framerate) override;
+    void videoSettings() override;
 
     /// \returns true iff auto gain is enabled.
     bool getAutogain() const;
@@ -154,9 +139,16 @@ public:
 	void setGreenBalance(uint8_t val);
 
     /// \brief Flip the camera's image.
-    /// \param horizontal true for a horizontal flip.
-    /// \param vertical true for a vertical flip.
-    void setFlip(bool horizontal, bool vertical);
+    /// \param enable true for a vertical flip.
+    void setVerticalFlip(bool enable);
+
+    /// \brief Flip the camera's image.
+    /// \param enable true for a horizontal flip.
+	void setHorizontalFlip(bool enable);
+
+    /// \brief Enable a test pattern overlay.
+    /// \param enable true for a test pattern.
+	void setTestPattern(bool enable);
 
 	/// \brief Enable the LED.
 	/// \param enable True if the LED should be enabled.
@@ -165,10 +157,10 @@ public:
     /// \returns the camera's current FPS value.
     float getFPS() const;
 
-protected:
-    /// \brief A typedef for the underlying ps3eye::PS3EYECam::PS3EYERef.
-//    typedef ps3eye::PS3EYECam::PS3EYECam PS3EYERef;
+	/// \returns the camera's current actual FPS value.
+	float getActualFPS() const;
 
+protected:
     /// \brief Constant used for YUV conversion.
     static const int ITUR_BT_601_CY;
 
@@ -202,7 +194,7 @@ protected:
     void exit(ofEventArgs& args);
     void start();
     void stop();
-    void threadedFunction();
+    void threadedFunction() override;
 
 private:
 	std::shared_ptr<ps3eye::PS3EYECam> _cam;
@@ -212,6 +204,8 @@ private:
     int _desiredFrameRate;
 
     bool _isFrameNew;
+
+	ofPixelFormat _pixelFormat;
 
     enum
     {

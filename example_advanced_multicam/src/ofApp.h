@@ -37,7 +37,8 @@ public:
     void update();
     void draw();
 
-    std::vector<std::shared_ptr<ofxPS3EyeGrabber> > videoGrabbers;
-    std::vector<ofTexture> videoTextures;
+	void keyPressed(int key);
+
+	std::vector<std::shared_ptr<ofVideoGrabber>> grabbers;
 
 };

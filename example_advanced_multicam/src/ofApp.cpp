@@ -28,11 +28,13 @@
 
 void ofApp::setup()
 {
-    ofSetVerticalSync(false);
+    ofSetVerticalSync(true);
 
 	int camWidth = 320;
 	int camHeight = 240;
-    int camFrameRate = 30;
+    int camFrameRate = 20;
+
+	cout << "----" << ofIsGLProgrammableRenderer() << endl;
 
     // We can now get back a list of devices.
     std::vector<ofVideoDevice> devices = ofxPS3EyeGrabber().listDevices();
@@ -49,39 +51,30 @@ void ofApp::setup()
         }
         else
         {
-            std::shared_ptr<ofxPS3EyeGrabber> videoGrabber = std::make_shared<ofxPS3EyeGrabber>();
+			std::shared_ptr<ofVideoGrabber> grabber = std::make_shared<ofVideoGrabber>();
 
-            videoGrabber->setDeviceID(i);
-            videoGrabber->setDesiredFrameRate(camFrameRate);
-            videoGrabber->setup(camWidth, camHeight);
-            videoGrabber->setAutogain(true);
-            videoGrabber->setAutoWhiteBalance(true);
+			grabber->setGrabber(std::make_shared<ofxPS3EyeGrabber>());
+			grabber->setDeviceID(i);
+			grabber->setDesiredFrameRate(camFrameRate);
+			grabber->setPixelFormat(OF_PIXELS_NATIVE);
+			grabber->setup(camWidth, camHeight);
 
-            videoGrabbers.push_back(videoGrabber);
+			grabber->getGrabber<ofxPS3EyeGrabber>()->setAutogain(true);
+			grabber->getGrabber<ofxPS3EyeGrabber>()->setAutoWhiteBalance(true);
 
-            // Add a texture.
-            videoTextures.push_back(ofTexture());
+            grabbers.push_back(grabber);
         }
 
         ofLogNotice("ofApp::setup") << ss.str();
 	}
-
-
 }
 
 
 void ofApp::update()
 {
-    for (std::size_t i = 0; i < videoGrabbers.size(); ++i)
-    {
-        videoGrabbers[i]->update();
-
-        if (videoGrabbers[i]->isFrameNew())
-        {
-            videoTextures[i].loadData(videoGrabbers[i]->getPixels());
-        }
-    }
+	for (auto& g: grabbers) g->update();
 }
+
 
 void ofApp::draw()
 {
@@ -91,30 +84,57 @@ void ofApp::draw()
     int x = 0;
     int y = 0;
 
-    for (std::size_t i = 0; i < videoGrabbers.size(); ++i)
-    {
+	for (auto& g: grabbers)
+	{
         ofPushMatrix();
         ofTranslate(x, y);
 
-        videoTextures[i].draw(0, 0);
+		g->draw(0, 0);
 
         std::stringstream ss;
 
-        ss << "App FPS: " << ofGetFrameRate() << std::endl;
-        ss << "Cam FPS: " << videoGrabbers[i]->getFPS();
+        ss << " App FPS: " << ofGetFrameRate() << std::endl;
+		ss << " Cam FPS: " << g->getGrabber<ofxPS3EyeGrabber>()->getFPS() << std::endl;
+		ss << "Real FPS: " << g->getGrabber<ofxPS3EyeGrabber>()->getActualFPS();
 
         ofDrawBitmapStringHighlight(ss.str(), ofPoint(10, 15));
 
         ofPopMatrix();
 
-        if (x + videoGrabbers[i]->getWidth() >= ofGetWidth())
-        {
-            y += videoGrabbers[i]->getHeight();
-            x = 0;
-        }
-        else
-        {
-            x += videoGrabbers[i]->getWidth();
-        }
+		x += g->getWidth();
+
+		if (x + g->getWidth() >= ofGetWidth())
+		{
+			y += g->getHeight();
+			x = 0;
+		}
     }
+}
+
+void ofApp::keyPressed(int key)
+{
+	if (key == 'h')
+	{
+		for (auto& g: grabbers) g->getGrabber<ofxPS3EyeGrabber>()->setHorizontalFlip(true);
+	}
+	else if (key == 'H')
+	{
+		for (auto& g: grabbers) g->getGrabber<ofxPS3EyeGrabber>()->setHorizontalFlip(false);
+	}
+	else if (key == 'v')
+	{
+		for (auto& g: grabbers) g->getGrabber<ofxPS3EyeGrabber>()->setVerticalFlip(true);
+	}
+	else if (key == 'V')
+	{
+		for (auto& g: grabbers) g->getGrabber<ofxPS3EyeGrabber>()->setVerticalFlip(false);
+	}
+	else if (key == 't')
+	{
+		for (auto& g: grabbers) g->getGrabber<ofxPS3EyeGrabber>()->setTestPattern(true);
+	}
+	else if (key == 'T')
+	{
+		for (auto& g: grabbers) g->getGrabber<ofxPS3EyeGrabber>()->setTestPattern(false);
+	}
 }

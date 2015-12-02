@@ -1,6 +1,6 @@
 // =============================================================================
 //
-// Copyright (c) 2014 Christopher Baker <http://christopherbaker.net>
+// Copyright (c) 2014-2015 Christopher Baker <http://christopherbaker.net>
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -23,66 +23,20 @@
 // =============================================================================
 
 
-#include "ofApp.h"
+#pragma once
 
 
-void ofApp::setup()
+#include "ofMain.h"
+#include "ofxPS3EyeGrabber.h"
+
+
+class ofApp: public ofBaseApp
 {
-    ofSetVerticalSync(false);
+public:
+    void setup();
+    void update();
+    void draw();
 
-	camWidth = 320;
-	camHeight = 240;
-    camFrameRate = 120;
+    ofVideoGrabber grabber;
 
-    //we can now get back a list of devices.
-    std::vector<ofVideoDevice> devices = vidGrabber.listDevices();
-
-    for(std::size_t i = 0; i < devices.size(); ++i)
-    {
-        std::stringstream ss;
-
-        ss << devices[i].id << ": " << devices[i].deviceName;
-
-        if(!devices[i].bAvailable)
-        {
-            ss << " - unavailable ";
-        }
-
-        ofLogNotice("ofApp::setup") << ss.str();
-	}
-
-	vidGrabber.setDeviceID(0);
-	vidGrabber.setDesiredFrameRate(camFrameRate);
-	vidGrabber.setup(camWidth, camHeight);
-
-    vidGrabber.setAutogain(false);
-    vidGrabber.setAutoWhiteBalance(false);
-
-}
-
-
-void ofApp::update()
-{
-	vidGrabber.update();
-
-	if (vidGrabber.isFrameNew())
-    {
-		videoTexture.loadData(vidGrabber.getPixels());
-	}
-}
-
-void ofApp::draw()
-{
-    ofBackground(0);
-    ofSetColor(255);
-
-    videoTexture.draw(0, 0);
-
-    std::stringstream ss;
-
-    ss << "App FPS: " << ofGetFrameRate() << std::endl;
-    ss << "Cam FPS: " << vidGrabber.getFPS();
-
-    ofDrawBitmapStringHighlight(ss.str(), ofPoint(10, 15));
-
-}
+};
