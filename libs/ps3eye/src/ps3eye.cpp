@@ -325,7 +325,10 @@ namespace ps3eye {
 
 
 	static const uint8_t sensor_start_vga[][2] = {
-		{ OV772X_REG_COM7, 0x00},
+		{
+            OV772X_REG_COM7,
+            0x00
+        },
 		{ OV772X_REG_HSTART, 0x26}, // 38
 		{ OV772X_REG_HSIZE, 0xA0}, // 160
 		{ OV772X_REG_VSTRT, 0x07}, // 7
@@ -354,7 +357,10 @@ namespace ps3eye {
 
 
 	static const uint8_t sensor_start_qvga[][2] = {
-		{ OV772X_REG_COM7, 0x40 },
+		{
+            OV772X_REG_COM7,
+            0x40 // 0b0100000
+        },
 		{ OV772X_REG_HSTART, 0x3F }, // 63
 		{ OV772X_REG_HSIZE, 0x50 }, // 80
 		{ OV772X_REG_VSTRT, 0x03 }, // 3
@@ -674,7 +680,6 @@ bool PS3EYECam::init(uint32_t width, uint32_t height, uint8_t desiredFrameRate)
 
 	sensor_id |= sccb_reg_read(OV772X_REG_VER);
 
-
 	debug("Sensor ID: %04x\n", sensor_id);
 
 	// initialize
@@ -730,11 +735,12 @@ void PS3EYECam::start()
 	is_streaming = true;
 }
 
+
 void PS3EYECam::stop()
 {
 	if(!is_streaming) return;
 
-	/* stop streaming data */
+	// stop streaming data
 	ov534_reg_write(OV534_REG_RESET0, 0x09);
 	ov534_set_led(0);
 
@@ -754,11 +760,14 @@ void PS3EYECam::setAutogain(bool val)
 {
 	autogain = val;
 
-	if (val) {
+	if (val)
+    {
 		sccb_reg_write(OV772X_REG_COM8, 0xF7); //AGC,AEC,AWB ON
 		sccb_reg_write(OV772X_REG_DSP_CTRL1,
 					   sccb_reg_read(OV772X_REG_DSP_CTRL1) | 0x03);
-	} else {
+	}
+    else
+    {
 		sccb_reg_write(OV772X_REG_COM8, 0xF0); //AGC,AEC,AWB OFF
 		sccb_reg_write(OV772X_REG_DSP_CTRL1,
 					   sccb_reg_read(OV772X_REG_DSP_CTRL1) & 0xFC);
@@ -788,6 +797,7 @@ void PS3EYECam::setAutoWhiteBalance(bool val)
 		sccb_reg_write(OV772X_REG_AWB_CTRL0, 0xAA); //AWB OFF
 	}
 }
+
 
 uint8_t PS3EYECam::getGain() const
 {
@@ -984,6 +994,7 @@ bool PS3EYECam::isStreaming() const
 {
 	return is_streaming;
 }
+
 
 bool PS3EYECam::isNewFrame() const
 {
@@ -1299,7 +1310,8 @@ void PS3EYECam::ov534_reg_write(uint16_t reg, uint8_t val)
 									  CTRL_TIMEOUT // timeout (in millseconds) that this function should wait before giving up due to no response being received. For an unlimited timeout, use value 0.
 									  );
 
-	if (ret < 0) {
+	if (ret < 0)
+    {
 		debug("write failed\n");
 	}
 }
@@ -1320,9 +1332,9 @@ uint8_t PS3EYECam::ov534_reg_read(uint16_t reg)
 	
 
 	//debug("reg=0x%04x, data=0x%02x", reg, usb_buf[0]);
-	if (ret < 0) {
+	if (ret < 0)
+    {
 		debug("read failed\n");
-		
 	}
 
 	return usb_buf[0];
@@ -1331,7 +1343,8 @@ uint8_t PS3EYECam::ov534_reg_read(uint16_t reg)
 int PS3EYECam::sccb_check_status()
 {
 	// Attempt 5 times.
-	for (int i = 0; i < 5; i++) {
+	for (int i = 0; i < 5; i++)
+    {
 		uint8_t data = ov534_reg_read(OV534_REG_STATUS);
 		
 		switch (data) {

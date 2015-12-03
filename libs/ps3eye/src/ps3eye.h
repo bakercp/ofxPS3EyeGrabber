@@ -33,7 +33,7 @@ namespace ps3eye {
 class PS3EYECam
 {
 public:
-	PS3EYECam(libusb_device *device);
+	PS3EYECam(libusb_device* device);
 	~PS3EYECam();
 
 	bool init(uint32_t width = 0,
@@ -85,7 +85,8 @@ public:
 
 	void setLED(bool enable);
 
-	static const std::vector<std::shared_ptr<PS3EYECam>>& getDevices( bool forceRefresh = false );
+	static const std::vector<std::shared_ptr<PS3EYECam>>& getDevices(bool forceRefresh = false);
+
 	bool updateDevices();
 
 	enum

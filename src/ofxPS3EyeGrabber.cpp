@@ -35,11 +35,11 @@ const int ofxPS3EyeGrabber::ITUR_BT_601_CVR = 1673527;
 const int ofxPS3EyeGrabber::ITUR_BT_601_SHIFT = 20;
 
 
-void ofxPS3EyeGrabber::yuv422_to_rgba(const uint8_t* yuv_src,
-                                      const int stride,
-                                      uint8_t* dst,
-                                      const int width,
-                                      const int height)
+void ofxPS3EyeGrabber::yuv422_to_rgba8888(const uint8_t* yuv_src,
+                                          const int stride,
+                                          uint8_t* dst,
+                                          const int width,
+                                          const int height)
 {
     const int bIdx = 2;
     const int uIdx = 0;
@@ -77,6 +77,59 @@ void ofxPS3EyeGrabber::yuv422_to_rgba(const uint8_t* yuv_src,
             row[7]      = (0xff);
         }
     }
+
+#undef _max
+#undef _saturate
+
+}
+
+
+void ofxPS3EyeGrabber::yuv422_to_rgb888(const uint8_t* yuv_src,
+                                        const int stride,
+                                        uint8_t* dst,
+                                        const int width,
+                                        const int height)
+{
+    const int bIdx = 2;
+    const int uIdx = 0;
+    const int yIdx = 0;
+
+    const int uidx = 1 - yIdx + uIdx * 2;
+    const int vidx = (2 + uidx) % 4;
+
+#define _max(a, b) (((a) > (b)) ? (a) : (b))
+#define _saturate(v) static_cast<uint8_t>(static_cast<uint32_t>(v) <= 0xff ? v : v > 0 ? 0xff : 0)
+
+    for (int j = 0; j < height; j++, yuv_src += stride)
+    {
+        uint8_t* row = dst + (width * 3) * j; // 3 channels
+
+        for (int i = 0; i < 2 * width; i += 4, row += 6)
+        {
+            int u = static_cast<int>(yuv_src[i + uidx]) - 128;
+            int v = static_cast<int>(yuv_src[i + vidx]) - 128;
+
+            
+            int ruv = (1 << (ITUR_BT_601_SHIFT - 1)) + ITUR_BT_601_CVR * v;
+            int guv = (1 << (ITUR_BT_601_SHIFT - 1)) + ITUR_BT_601_CVG * v + ITUR_BT_601_CUG * u;
+            int buv = (1 << (ITUR_BT_601_SHIFT - 1)) + ITUR_BT_601_CUB * u;
+
+            int y00 = _max(0, static_cast<int>(yuv_src[i + yIdx]) - 16) * ITUR_BT_601_CY;
+
+            row[2-bIdx] = _saturate((y00 + ruv) >> ITUR_BT_601_SHIFT);
+            row[1]      = _saturate((y00 + guv) >> ITUR_BT_601_SHIFT);
+            row[bIdx]   = _saturate((y00 + buv) >> ITUR_BT_601_SHIFT);
+
+            int y01 = _max(0, static_cast<int>(yuv_src[i + yIdx + 2]) - 16) * ITUR_BT_601_CY;
+            row[5-bIdx] = _saturate((y01 + ruv) >> ITUR_BT_601_SHIFT);
+            row[4]      = _saturate((y01 + guv) >> ITUR_BT_601_SHIFT);
+            row[3+bIdx] = _saturate((y01 + buv) >> ITUR_BT_601_SHIFT);
+        }
+    }
+    
+#undef _max
+#undef _saturate
+    
 }
 
 
@@ -84,7 +137,7 @@ ofxPS3EyeGrabber::ofxPS3EyeGrabber():
     _deviceId(0),
     _desiredFrameRate(60),
     _isFrameNew(true),
-	_pixelFormat(OF_PIXELS_RGBA)
+	_pixelFormat(OF_PIXELS_RGB)
 {
     ofAddListener(ofEvents().exit, this, &ofxPS3EyeGrabber::exit);
 }
@@ -95,6 +148,50 @@ ofxPS3EyeGrabber::~ofxPS3EyeGrabber()
     ofRemoveListener(ofEvents().exit, this, &ofxPS3EyeGrabber::exit);
     stop();
     _cam.reset();
+}
+
+
+void ofxPS3EyeGrabber::exit(ofEventArgs& args)
+{
+    stop();
+}
+
+
+void ofxPS3EyeGrabber::start()
+{
+    if (_cam)
+    {
+        _cam->start();
+        startThread(false); // No blocking.
+    }
+}
+
+
+void ofxPS3EyeGrabber::stop()
+{
+    stopThread();
+
+    if (_cam)
+    {
+        _cam->stop();
+    }
+}
+
+
+void ofxPS3EyeGrabber::threadedFunction()
+{
+    while (isThreadRunning())
+    {
+        if (_cam)
+        {
+            bool res = _cam->updateDevices();
+
+            if (!res)
+            {
+                break;
+            }
+        }
+    }
 }
 
 
@@ -137,13 +234,6 @@ bool ofxPS3EyeGrabber::setup(int w, int h)
 
             if (success)
             {
-				if (_pixelFormat == OF_PIXELS_RGBA)
-				{
-					_pixels.allocate(_cam->getWidth(),
-									 _cam->getHeight(),
-									 OF_PIXELS_RGBA);
-				}
-
                 start();
                 return true;
             }
@@ -174,16 +264,43 @@ void ofxPS3EyeGrabber::update()
     {
         if (_cam->isNewFrame())
         {
-			if (_pixelFormat == OF_PIXELS_RGBA)
+			if (_pixelFormat == OF_PIXELS_RGB)
 			{
-				yuv422_to_rgba(_cam->getLastFramePointer(),
-							   _cam->getRowBytes(),
-							   _pixels.getData(),
-							   _cam->getWidth(),
-							   _cam->getHeight());
+                if (!_pixels.isAllocated() || _pixels.getPixelFormat() != OF_PIXELS_RGB)
+                {
+                    _pixels.allocate(_cam->getWidth(),
+                                     _cam->getHeight(),
+                                     OF_PIXELS_RGB);
+
+                    cout << "allocating! " << _pixels.size() << std::endl;
+
+                }
+
+				yuv422_to_rgb888(_cam->getLastFramePointer(),
+                                 _cam->getRowBytes(),
+                                 _pixels.getData(),
+                                 _cam->getWidth(),
+                                 _cam->getHeight());
 			}
+            else if (_pixelFormat == OF_PIXELS_RGBA)
+            {
+                if (!_pixels.isAllocated() || _pixels.getPixelFormat() != OF_PIXELS_RGBA)
+                {
+                    _pixels.allocate(_cam->getWidth(),
+                                     _cam->getHeight(),
+                                     OF_PIXELS_RGBA);
+                }
+
+                yuv422_to_rgba8888(_cam->getLastFramePointer(),
+                                   _cam->getRowBytes(),
+                                   _pixels.getData(),
+                                   _cam->getWidth(),
+                                   _cam->getHeight());
+            }
 			else
 			{
+                // Set from native pixels requires no extra copying or
+                // colorspace conversion.
 				_pixels.setFromExternalPixels(_cam->getLastFramePointer(),
 											  _cam->getWidth(),
 											  _cam->getHeight(),
@@ -262,7 +379,9 @@ bool ofxPS3EyeGrabber::setPixelFormat(ofPixelFormat pixelFormat)
 		_pixelFormat = OF_PIXELS_YUY2;
 		return true;
 	}
-	else if (pixelFormat == OF_PIXELS_YUY2 || pixelFormat == OF_PIXELS_RGBA)
+	else if (pixelFormat == OF_PIXELS_RGB ||
+             pixelFormat == OF_PIXELS_RGBA ||
+             pixelFormat == OF_PIXELS_YUY2)
 	{
 		_pixelFormat = pixelFormat;
 		return true;
@@ -683,47 +802,4 @@ float ofxPS3EyeGrabber::getActualFPS() const
 }
 
 
-
-void ofxPS3EyeGrabber::exit(ofEventArgs& args)
-{
-    stop();
-}
-
-
-void ofxPS3EyeGrabber::start()
-{
-    if (_cam)
-    {
-        _cam->start();
-        startThread(false); // No blocking.
-    }
-}
-
-
-void ofxPS3EyeGrabber::stop()
-{
-    stopThread();
-
-    if (_cam)
-    {
-        _cam->stop();
-    }
-}
-
-
-void ofxPS3EyeGrabber::threadedFunction()
-{
-    while (isThreadRunning())
-    {
-		if (_cam)
-		{
-			bool res = _cam->updateDevices();
-
-			if (!res)
-			{
-				break;
-			}
-		}
-    }
-}
 
