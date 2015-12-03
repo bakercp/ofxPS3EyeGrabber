@@ -596,8 +596,8 @@ PS3EYECam::PS3EYECam(libusb_device *device):
     frame_height(0),
     frame_stride(0),
     frame_rate(0),
-    handle_(nullptr),
 	device_(device),
+    handle_(nullptr),
 	urb(std::make_shared<URBDesc>())
 {
 }
