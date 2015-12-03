@@ -271,9 +271,6 @@ void ofxPS3EyeGrabber::update()
                     _pixels.allocate(_cam->getWidth(),
                                      _cam->getHeight(),
                                      OF_PIXELS_RGB);
-
-                    cout << "allocating! " << _pixels.size() << std::endl;
-
                 }
 
 				yuv422_to_rgb888(_cam->getLastFramePointer(),
