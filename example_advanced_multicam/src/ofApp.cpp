@@ -55,6 +55,14 @@ void ofApp::setup()
 			grabber->setGrabber(std::make_shared<ofxPS3EyeGrabber>());
 			grabber->setDeviceID(i);
 			grabber->setDesiredFrameRate(camFrameRate);
+
+            // The native pixel format for the ofxPS3EyeGrabber is OF_PIXELS_YUY2
+            // (aka YUV422).  When used this way, no additional pixel copies are made
+            // or colorspace conversions are performed.
+            //
+            // The programmable renderer is able to directly render YUV422 pixels.
+            // so be sure to that the OpenGL version is > 3.2, otherwise you'll
+            // get a blank screen.
 			grabber->setPixelFormat(OF_PIXELS_NATIVE);
 			grabber->setup(camWidth, camHeight);
 
