@@ -24,26 +24,32 @@
 
 
 #include "ofApp.h"
+#include "ofxPS3EyeGrabber.h"
 
 
 void ofApp::setup()
 {
     ofSetVerticalSync(true);
 
-    std::vector<ofVideoDevice> devices = grabber.listDevices();
+    grabber.setGrabber(std::make_shared<ofxPS3EyeGrabber>());
 
-	if (!devices.empty())
-	{
-		grabber.setGrabber(std::make_shared<ofxPS3EyeGrabber>());
-		grabber.setDeviceID(0);
-		grabber.setPixelFormat(OF_PIXELS_NATIVE);
-		grabber.setDesiredFrameRate(60);
-		grabber.setup(640, 480);
+    // These are all settings that can be set for any ofVideoGrabber.
+    grabber.setDeviceID(0);
 
-        // Set PS3EyeGrabber specific paramaters.
-		grabber.getGrabber<ofxPS3EyeGrabber>()->setAutogain(true);
-		grabber.getGrabber<ofxPS3EyeGrabber>()->setAutoWhiteBalance(true);
-	}
+    // The native pixel format for the ofxPS3EyeGrabber is OF_PIXELS_YUY2
+    // (aka YUV422).  When used this way, no additional pixel copies are made
+    // or colorspace conversions are performed.
+    //
+    // The programmable renderer is able to directly render YUV422 pixels.
+    // so be sure to that the OpenGL version is > 3.2, otherwise you'll
+    // get a blank screen.
+    grabber.setPixelFormat(OF_PIXELS_NATIVE);
+    grabber.setDesiredFrameRate(60);
+    grabber.setup(640, 480);
+
+    // These are examples of ofxPS3EyeGrabber-specific paramaters.
+    grabber.getGrabber<ofxPS3EyeGrabber>()->setAutogain(true);
+    grabber.getGrabber<ofxPS3EyeGrabber>()->setAutoWhiteBalance(true);
 }
 
 

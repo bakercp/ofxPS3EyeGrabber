@@ -1,6 +1,6 @@
 // =============================================================================
 //
-// Copyright (c) 2014 Christopher Baker <http://christopherbaker.net>
+// Copyright (c) 2014-2015 Christopher Baker <http://christopherbaker.net>
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -32,13 +32,12 @@ void ofApp::setup()
 
 	int camWidth = 320;
 	int camHeight = 240;
-    int camFrameRate = 20;
+    int camFrameRate = 15;
 
-	cout << "----" << ofIsGLProgrammableRenderer() << endl;
-
-    // We can now get back a list of devices.
+    // We can get a list of devices.
     std::vector<ofVideoDevice> devices = ofxPS3EyeGrabber().listDevices();
 
+    // Now cycle through the devices and set up grabbers for each.
 	for (std::size_t i = 0; i < devices.size(); ++i)
     {
         std::stringstream ss;
@@ -59,6 +58,7 @@ void ofApp::setup()
 			grabber->setPixelFormat(OF_PIXELS_NATIVE);
 			grabber->setup(camWidth, camHeight);
 
+            // Make ofxPS3EyeGrabber-specific settings updates.
 			grabber->getGrabber<ofxPS3EyeGrabber>()->setAutogain(true);
 			grabber->getGrabber<ofxPS3EyeGrabber>()->setAutoWhiteBalance(true);
 
@@ -72,6 +72,7 @@ void ofApp::setup()
 
 void ofApp::update()
 {
+    // Update all grabbers.
 	for (auto& g: grabbers) g->update();
 }
 

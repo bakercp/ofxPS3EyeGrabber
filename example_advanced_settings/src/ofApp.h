@@ -27,7 +27,6 @@
 
 
 #include "ofMain.h"
-#include "ofxPS3EyeGrabber.h"
 
 
 class ofApp: public ofBaseApp
