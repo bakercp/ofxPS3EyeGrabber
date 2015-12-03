@@ -591,8 +591,12 @@ PS3EYECam::PS3EYECam(libusb_device *device):
 	flip_h(false),
 	flip_v(false),
 	testPattern(false),
-	handle_(nullptr),
-	is_streaming(false),
+    is_streaming(false),
+    frame_width(0),
+    frame_height(0),
+    frame_stride(0),
+    frame_rate(0),
+    handle_(nullptr),
 	device_(device),
 	urb(std::make_shared<URBDesc>())
 {

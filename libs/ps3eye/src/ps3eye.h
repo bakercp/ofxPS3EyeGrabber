@@ -151,8 +151,8 @@ private:
 	mutable std::chrono::time_point<std::chrono::high_resolution_clock> last_qued_frame_time;
 	
 	//usb stuff
-	libusb_device *device_;
-	libusb_device_handle *handle_;
+	libusb_device* device_;
+	libusb_device_handle* handle_;
 	uint8_t usb_buf[64];
 	
 	std::shared_ptr<URBDesc> urb;
