@@ -363,9 +363,9 @@ void URBDesc::cb_xfr(struct libusb_transfer* xfr)
 
 uint8_t URBDesc::find_ep(struct libusb_device* device)
 {
-	const struct libusb_interface_descriptor* altsetting;
-	const struct libusb_endpoint_descriptor* ep;
-	struct libusb_config_descriptor *config;
+	const struct libusb_interface_descriptor* altsetting = nullptr;
+	const struct libusb_endpoint_descriptor* ep  = nullptr;
+	struct libusb_config_descriptor* config = nullptr;
 	uint8_t ep_addr = 0;
 
 	libusb_get_active_config_descriptor(device, &config);
@@ -385,18 +385,21 @@ uint8_t URBDesc::find_ep(struct libusb_device* device)
 		}
 	}
 
-	for (uint8_t i = 0; i < altsetting->bNumEndpoints; i++)
-	{
-		ep = &altsetting->endpoint[i];
+    if (altsetting != nullptr)
+    {
+        for (uint8_t i = 0; i < altsetting->bNumEndpoints; i++)
+        {
+            ep = &altsetting->endpoint[i];
 
-		if ((ep->bmAttributes & LIBUSB_TRANSFER_TYPE_MASK) == LIBUSB_TRANSFER_TYPE_BULK
-			&& ep->wMaxPacketSize != 0)
-		{
-			ep_addr = ep->bEndpointAddress;
-			break;
-		}
-	}
-	
+            if ((ep->bmAttributes & LIBUSB_TRANSFER_TYPE_MASK) == LIBUSB_TRANSFER_TYPE_BULK
+                && ep->wMaxPacketSize != 0)
+            {
+                ep_addr = ep->bEndpointAddress;
+                break;
+            }
+        }
+    }
+
 	libusb_free_config_descriptor(config);
 	
 	return ep_addr;
