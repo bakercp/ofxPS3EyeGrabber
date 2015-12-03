@@ -88,16 +88,16 @@ public:
     /// \returns true iff auto gain is enabled.
     bool getAutogain() const;
 
-	/// \brief Set the auto gain.
-	/// \param val the auto gain value.
+    /// \brief Set the auto gain.
+    /// \param val the auto gain value.
     void setAutogain(bool val);
 
     /// \returns true iff auto white balance is enabled.
     bool getAutoWhiteBalance() const;
 
-	/// \brief Set the auto white balance.
-	/// \param val the auto white balance value.
-	void setAutoWhiteBalance(bool val);
+    /// \brief Set the auto white balance.
+    /// \param val the auto white balance value.
+    void setAutoWhiteBalance(bool val);
 
     /// \returns the current gain setting.
     uint8_t getGain() const;
@@ -155,12 +155,12 @@ public:
     /// \param val a blue balance between 0-255.
     void setBlueBalance(uint8_t val);
 
-	/// \returns the current green balance setting.
-	uint8_t getGreenBalance() const;
+    /// \returns the current green balance setting.
+    uint8_t getGreenBalance() const;
 
-	/// \brief Set the camera's green balance.
-	/// \param val a blue balance between 0-255.
-	void setGreenBalance(uint8_t val);
+    /// \brief Set the camera's green balance.
+    /// \param val a blue balance between 0-255.
+    void setGreenBalance(uint8_t val);
 
     /// \brief Flip the camera's image.
     /// \param enable true for a vertical flip.
@@ -168,21 +168,21 @@ public:
 
     /// \brief Flip the camera's image.
     /// \param enable true for a horizontal flip.
-	void setHorizontalFlip(bool enable);
+    void setHorizontalFlip(bool enable);
 
     /// \brief Enable a test pattern overlay.
     /// \param enable true for a test pattern.
-	void setTestPattern(bool enable);
+    void setTestPattern(bool enable);
 
-	/// \brief Enable the LED.
-	/// \param enable True if the LED should be enabled.
-	void setLED(bool enable);
+    /// \brief Enable the LED.
+    /// \param enable True if the LED should be enabled.
+    void setLED(bool enable);
 
     /// \returns the camera's current FPS value.
     float getFPS() const;
 
-	/// \returns the camera's current actual FPS value.
-	float getActualFPS() const;
+    /// \returns the camera's current actual FPS value.
+    float getActualFPS() const;
 
 protected:
     /// \brief Constant used for YUV conversion.
@@ -230,13 +230,13 @@ protected:
 
 private:
     /// \brief A shared pointer to the underlying camera device.
-	std::shared_ptr<ps3eye::PS3EYECam> _cam;
+    std::shared_ptr<ps3eye::PS3EYECam> _cam;
 
     /// \brief An internal copy (or pointer) to the camera pixels.
     ofPixels _pixels;
 
     /// \brief The device id.
-	std::size_t _deviceId;
+    std::size_t _deviceId;
 
     /// \brief The desired framerate.
     int _desiredFrameRate;
@@ -245,7 +245,7 @@ private:
     bool _isFrameNew;
 
     /// \brief The desired pixel format.
-	ofPixelFormat _pixelFormat;
+    ofPixelFormat _pixelFormat;
 
     enum
     {
