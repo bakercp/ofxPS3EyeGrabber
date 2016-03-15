@@ -19,16 +19,18 @@ std::vector<std::shared_ptr<ps3eye::PS3EYECam>> URBDesc::listDevices()
     libusb_device *dev;
     libusb_device **devs;
 
-    int cnt = libusb_get_device_list(nullptr, &devs);
+    ssize_t cnt = libusb_get_device_list(nullptr, &devs);
 
     if (cnt < 0)
+    {
         debug("Error Device scan\n");
+    }
 
     cnt = 0;
 
     int i = 0;
 
-    while ((dev = devs[i++]) != NULL)
+    while ((dev = devs[i++]) != nullptr)
     {
         struct libusb_device_descriptor desc;
 
@@ -88,10 +90,10 @@ URBDesc::~URBDesc()
         close_transfers();
     }
 
-    if (frame_buffer != NULL)
+    if (frame_buffer != nullptr)
     {
         delete [] frame_buffer;
-        frame_buffer = NULL;
+        frame_buffer = nullptr;
     }
 
     debug("URBDesc destructor\n");
