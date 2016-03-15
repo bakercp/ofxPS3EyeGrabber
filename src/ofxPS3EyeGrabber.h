@@ -178,7 +178,7 @@ public:
     /// \param enable True if the LED should be enabled.
     void setLED(bool enable);
 
-    /// \returns the camera's current FPS value.
+    /// \returns the camera's current requested FPS value.
     float getFPS() const;
 
     /// \returns the camera's current actual FPS value.

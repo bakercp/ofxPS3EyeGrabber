@@ -220,13 +220,13 @@ bool ofxPS3EyeGrabber::setup(int w, int h)
 {
     if (!_cam)
     {
-        const std::vector<std::shared_ptr<ps3eye::PS3EYECam>>& eyeDevices = ps3eye::PS3EYECam::getDevices();
+        const auto& eyeDevices = ps3eye::PS3EYECam::getDevices();
 
         if (_deviceId < eyeDevices.size())
         {
             _cam = eyeDevices[_deviceId];
 
-            bool success = _cam->init(w, h, _desiredFrameRate);
+            bool success = _cam->init(w, h, _requestedFrameRate);
 
             if (success)
             {
@@ -407,7 +407,7 @@ void ofxPS3EyeGrabber::setDeviceID(int deviceId)
 
 void ofxPS3EyeGrabber::setDesiredFrameRate(int framerate)
 {
-    _desiredFrameRate = framerate;
+    _requestedFrameRate = framerate;
 }
 
 
