@@ -372,9 +372,9 @@ bool ofxPS3EyeGrabber::setPixelFormat(ofPixelFormat pixelFormat)
         _pixelFormat = OF_PIXELS_YUY2;
         return true;
     }
-    else if (pixelFormat == OF_PIXELS_RGB ||
-             pixelFormat == OF_PIXELS_RGBA ||
-             pixelFormat == OF_PIXELS_YUY2)
+    else if (pixelFormat == OF_PIXELS_RGB
+          || pixelFormat == OF_PIXELS_RGBA
+          || pixelFormat == OF_PIXELS_YUY2)
     {
         _pixelFormat = pixelFormat;
         return true;
