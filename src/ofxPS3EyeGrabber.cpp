@@ -195,7 +195,7 @@ std::vector<ofVideoDevice> ofxPS3EyeGrabber::listDevices() const
 {
     std::vector<ofVideoDevice> devices;
 
-    const std::vector<std::shared_ptr<ps3eye::PS3EYECam>>& eyeDevices = ps3eye::PS3EYECam::getDevices();
+    const auto& eyeDevices = ps3eye::PS3EYECam::getDevices();
 
     auto iter = eyeDevices.begin();
 
