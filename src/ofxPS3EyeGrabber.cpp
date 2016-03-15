@@ -158,7 +158,7 @@ void ofxPS3EyeGrabber::start()
     if (_cam)
     {
         _cam->start();
-        startThread(false); // No blocking.
+        startThread();
     }
 }
 
