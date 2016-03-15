@@ -149,7 +149,10 @@ private:
 	uint8_t frame_rate;
 	
 	mutable std::chrono::time_point<std::chrono::high_resolution_clock> last_qued_frame_time;
-	
+
+    uint16_t _sensor_id;
+    uint16_t _manufacturer_id;
+
 	//usb stuff
 	libusb_device* device_;
 	libusb_device_handle* handle_;

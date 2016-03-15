@@ -619,8 +619,6 @@ PS3EYECam::~PS3EYECam()
 
 bool PS3EYECam::init(uint32_t width, uint32_t height, uint8_t desiredFrameRate)
 {
-    uint16_t sensor_id;
-
     // open usb device so we can setup and go
     if (handle_ == nullptr)
     {
@@ -674,14 +672,11 @@ bool PS3EYECam::init(uint32_t width, uint32_t height, uint8_t desiredFrameRate)
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
     // probe the sensor
-    sccb_reg_read(OV772X_REG_PID);
-    sensor_id = sccb_reg_read(OV772X_REG_PID) << 8;
+    _sensor_id = sccb_reg_read(OV772X_REG_PID) << 8;
+    _sensor_id |= sccb_reg_read(OV772X_REG_VER);
 
-    sccb_reg_read(OV772X_REG_VER);
-
-    sensor_id |= sccb_reg_read(OV772X_REG_VER);
-
-    debug("Sensor ID: %04x\n", sensor_id);
+    _manufacturer_id = sccb_reg_read(OV772X_REG_MIDH) << 8;
+    _manufacturer_id |= sccb_reg_read(OV772X_REG_MIDL);
 
     // initialize
     ov534_w_array(ov534_reg_initdata, ARRAY_SIZE(ov534_reg_initdata));
