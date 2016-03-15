@@ -133,11 +133,7 @@ void ofxPS3EyeGrabber::yuv422_to_rgb888(const uint8_t* yuv_src,
 }
 
 
-ofxPS3EyeGrabber::ofxPS3EyeGrabber():
-    _deviceId(0),
-    _desiredFrameRate(60),
-    _isFrameNew(true),
-    _pixelFormat(OF_PIXELS_RGB)
+ofxPS3EyeGrabber::ofxPS3EyeGrabber()
 {
     ofAddListener(ofEvents().exit, this, &ofxPS3EyeGrabber::exit);
 }

@@ -236,16 +236,16 @@ private:
     ofPixels _pixels;
 
     /// \brief The device id.
-    std::size_t _deviceId;
+    std::size_t _deviceId = 0;
 
-    /// \brief The desired framerate.
-    int _desiredFrameRate;
+    /// \brief The requested framerate.
+    int _requestedFrameRate = 60;
 
     /// \brief True if the frame is new.
-    bool _isFrameNew;
+    bool _isFrameNew = true;
 
     /// \brief The desired pixel format.
-    ofPixelFormat _pixelFormat;
+    ofPixelFormat _pixelFormat = OF_PIXELS_RGB;
 
     enum
     {
