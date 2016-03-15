@@ -42,7 +42,7 @@ void ofApp::setup()
     {
         std::stringstream ss;
 
-        ss << devices[i].id << ": " << devices[i].deviceName;
+        ss << devices[i].id << ": " << devices[i].deviceName << " : " << devices[i].serialID;
 
         if (!devices[i].bAvailable)
         {
