@@ -133,7 +133,7 @@ void ofxPS3EyeGrabber::yuv422_to_rgb888(const uint8_t* yuv_src,
 }
 
 
-ofxPS3EyeGrabber::ofxPS3EyeGrabber()
+ofxPS3EyeGrabber::ofxPS3EyeGrabber(int deviceId): _deviceId(deviceId)
 {
     ofAddListener(ofEvents().exit, this, &ofxPS3EyeGrabber::exit);
 }

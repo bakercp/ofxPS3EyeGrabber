@@ -40,7 +40,8 @@ class ofxPS3EyeGrabber:
 {
 public:
     /// \brief Create an uninitialized ofxPS3EyeGrabber.
-    ofxPS3EyeGrabber();
+    /// \param deviceId The device id.
+    ofxPS3EyeGrabber(int deviceId = 0);
 
     /// \brief Destroy the PS3EyeGrabber.
     virtual ~ofxPS3EyeGrabber();
