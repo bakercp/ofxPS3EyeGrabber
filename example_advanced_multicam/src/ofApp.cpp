@@ -42,7 +42,13 @@ void ofApp::setup()
     {
         std::stringstream ss;
 
-        ss << devices[i].id << ": " << devices[i].deviceName << " : " << devices[i].serialID;
+        // Since the PS3Eye does not provide a serial number via its USB interface, the devices[i].id offers the
+        // next best alternative.  The devices[i].id is constructed from the USB topology and should remain constant
+        // over reboots as long as the USB topology remains the same (i.e. everything stays plugged into the same
+        // hubs, ports, etc).  For reference, this number should be equal to the Location ID on OSX and can be
+        // found in the System Profiler.
+
+        ss << "0x" << ofToHex(devices[i].id) << " : " << devices[i].deviceName << " : " << devices[i].serialID;
 
         if (!devices[i].bAvailable)
         {
@@ -52,8 +58,7 @@ void ofApp::setup()
         {
 			std::shared_ptr<ofVideoGrabber> grabber = std::make_shared<ofVideoGrabber>();
 
-			grabber->setGrabber(std::make_shared<ofxPS3EyeGrabber>());
-			grabber->setDeviceID(i);
+			grabber->setGrabber(std::make_shared<ofxPS3EyeGrabber>(devices[i].id));
 			grabber->setDesiredFrameRate(camFrameRate);
 
             // The native pixel format for the ofxPS3EyeGrabber is OF_PIXELS_YUY2
