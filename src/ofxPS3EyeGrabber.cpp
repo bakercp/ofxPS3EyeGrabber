@@ -213,31 +213,32 @@ std::vector<ofVideoDevice> ofxPS3EyeGrabber::listDevices() const
 
 bool ofxPS3EyeGrabber::setup(int w, int h)
 {
-    if (!_cam)
+    if (_cam == nullptr)
     {
         const auto& eyeDevices = ps3eye::PS3EYECam::getDevices();
 
-        if (_deviceId < eyeDevices.size())
+        for (const auto& device : eyeDevices)
         {
-            _cam = eyeDevices[_deviceId];
-
-            bool success = _cam->init(w, h, _requestedFrameRate);
-
-            if (success)
+            if (_deviceId == device->id())
             {
-                start();
-                return true;
-            }
-            else
-            {
-                return false;
+                _cam = device;
+
+                bool success = _cam->init(w, h, _requestedFrameRate);
+
+                if (success)
+                {
+                    start();
+                    return true;
+                }
+                else
+                {
+                    return false;
+                }
             }
         }
-        else
-        {
-            ofLogWarning("ofxPS3EyeGrabber::setup") << "Device id is out of range: " << _deviceId;
-            return false;
-        }
+
+        ofLogWarning("ofxPS3EyeGrabber::setup") << "Device id was is not found: " << "0x" << ofToHex(_deviceId);
+        return false;
     }
     else
     {
