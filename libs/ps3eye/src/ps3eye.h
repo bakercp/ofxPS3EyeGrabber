@@ -85,6 +85,8 @@ public:
 
 	void setLED(bool enable);
 
+    uint32_t id() const;
+
 	static const std::vector<std::shared_ptr<PS3EYECam>>& getDevices(bool forceRefresh = false);
 
 	bool updateDevices();
@@ -153,12 +155,14 @@ private:
     uint16_t _sensor_id;
     uint16_t _manufacturer_id;
 
+    uint32_t _id;
+
 	//usb stuff
-	libusb_device* device_;
-	libusb_device_handle* handle_;
+	libusb_device* _device;
+	libusb_device_handle* _handle;
 	uint8_t usb_buf[64];
 	
-	std::shared_ptr<URBDesc> urb;
+	std::shared_ptr<URBDesc> _urb;
 	
 	bool open_usb();
 

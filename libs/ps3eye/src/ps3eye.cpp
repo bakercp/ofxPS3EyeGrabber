@@ -569,7 +569,7 @@ const std::vector<std::shared_ptr<PS3EYECam>>& PS3EYECam::getDevices(bool forceR
 
 bool PS3EYECam::updateDevices()
 {
-    return urb->handleEvents();
+    return _urb->handleEvents();
 }
 
 
@@ -593,12 +593,31 @@ PS3EYECam::PS3EYECam(libusb_device *device):
     frame_height(0),
     frame_stride(0),
     frame_rate(0),
-    device_(device),
-    handle_(nullptr),
-    urb(std::make_shared<URBDesc>())
+    _device(device),
+    _handle(nullptr),
+    _urb(std::make_shared<URBDesc>()),
+    _sensor_id(0),
+    _manufacturer_id(0),
+    _id(0)
 {
     // Take ownership of device.
     libusb_ref_device(_device);
+
+    // Determine device's location id.
+    // This should not change unless the USB topology changes.
+
+    // This is equivalent to the Location ID on OSX.
+    uint8_t portNumbers[8];
+    int numPorts = libusb_get_port_numbers(_device, portNumbers, 8);
+    if (numPorts != LIBUSB_ERROR_OVERFLOW)
+    {
+        _id |= (libusb_get_bus_number(_device) << 24);
+
+        for (int i = 0; i < numPorts; ++i)
+        {
+            _id |= (portNumbers[i] << (20 - 4 * i));
+        }
+    }
 }
 
 
@@ -606,14 +625,14 @@ PS3EYECam::~PS3EYECam()
 {
     stop();
 
-    if (handle_ != nullptr)
+    if (_handle != nullptr)
     {
         debug("closing device\n");
-        libusb_release_interface(handle_, 0);
-        libusb_close(handle_);
-        libusb_unref_device(device_);
-        handle_ = nullptr;
-        device_ = nullptr;
+        libusb_release_interface(_handle, 0);
+        libusb_close(_handle);
+        libusb_unref_device(_device);
+        _handle = nullptr;
+        _device = nullptr;
         debug("device closed\n");
     }
 }
@@ -622,10 +641,10 @@ PS3EYECam::~PS3EYECam()
 bool PS3EYECam::init(uint32_t width, uint32_t height, uint8_t desiredFrameRate)
 {
     // open usb device so we can setup and go
-    if (handle_ == nullptr)
+    if (_handle == nullptr)
     {
         // open, set first config and claim interface
-        int res = libusb_open(device_, &handle_);
+        int res = libusb_open(_device, &_handle);
 
         if(res != 0)
         {
@@ -633,9 +652,9 @@ bool PS3EYECam::init(uint32_t width, uint32_t height, uint8_t desiredFrameRate)
             return false;
         }
 
-        // libusb_set_configuration(handle_, 0);
+        // libusb_set_configuration(_handle, 0);
 
-        res = libusb_claim_interface(handle_, 0);
+        res = libusb_claim_interface(_handle, 0);
 
         if (res != 0)
         {
@@ -726,7 +745,7 @@ void PS3EYECam::start()
     ov534_reg_write(OV534_REG_RESET0, 0x00); // start stream
 
     // init and start urb
-    urb->start_transfers(handle_, frame_stride * frame_height);
+    _urb->start_transfers(_handle, frame_stride * frame_height);
 
     last_qued_frame_time = std::chrono::time_point<std::chrono::high_resolution_clock>();
 
@@ -743,7 +762,7 @@ void PS3EYECam::stop()
     ov534_set_led(0);
 
     // close urb
-    urb->close_transfers();
+    _urb->close_transfers();
 
     is_streaming = false;
 }
@@ -996,7 +1015,7 @@ bool PS3EYECam::isStreaming() const
 
 bool PS3EYECam::isNewFrame() const
 {
-    if (last_qued_frame_time < urb->last_frame_time)
+    if (last_qued_frame_time < _urb->last_frame_time)
     {
         return true;
     }
@@ -1007,16 +1026,16 @@ bool PS3EYECam::isNewFrame() const
 
 const uint8_t* PS3EYECam::getLastFramePointer() const
 {
-    last_qued_frame_time = urb->last_frame_time;
-    const uint8_t* frame = const_cast<uint8_t*>(urb->frame_buffer + urb->frame_complete_ind * urb->frame_size);
+    last_qued_frame_time = _urb->last_frame_time;
+    const uint8_t* frame = const_cast<uint8_t*>(_urb->frame_buffer + _urb->frame_complete_ind * _urb->frame_size);
     return frame;
 }
 
 
 uint8_t* PS3EYECam::getLastFramePointer()
 {
-    last_qued_frame_time = urb->last_frame_time;
-    uint8_t* frame = urb->frame_buffer + urb->frame_complete_ind * urb->frame_size;
+    last_qued_frame_time = _urb->last_frame_time;
+    uint8_t* frame = _urb->frame_buffer + _urb->frame_complete_ind * _urb->frame_size;
     return frame;
 }
 
@@ -1041,10 +1060,8 @@ uint8_t PS3EYECam::getFrameRate() const
 
 double PS3EYECam::getActualFrameRate() const
 {
-    return 1.0 / urb->smoothFrameDuration;
+    return 1.0 / _urb->smoothFrameDuration;
 }
-
-
 
 uint32_t PS3EYECam::getRowBytes() const
 {
@@ -1058,10 +1075,16 @@ void PS3EYECam::setLED(bool enable)
 }
 
 
+uint32_t PS3EYECam::id() const
+{
+    return _id;
+}
+
+
 bool PS3EYECam::open_usb()
 {
     // open, set first config and claim interface
-    int res = libusb_open(device_, &handle_);
+    int res = libusb_open(_device, &_handle);
 
     if(res != 0)
     {
@@ -1071,7 +1094,7 @@ bool PS3EYECam::open_usb()
 
     //libusb_set_configuration(handle_, 0);
 
-    res = libusb_claim_interface(handle_, 0);
+    res = libusb_claim_interface(_handle, 0);
 
     if (res != 0)
     {
@@ -1298,7 +1321,7 @@ void PS3EYECam::ov534_reg_write(uint16_t reg, uint8_t val)
 
     uint8_t bmRequestType = LIBUSB_ENDPOINT_OUT | LIBUSB_REQUEST_TYPE_VENDOR | LIBUSB_RECIPIENT_DEVICE;
 
-    int ret = libusb_control_transfer(handle_, // a handle for the device to communicate with
+    int ret = libusb_control_transfer(_handle, // a handle for the device to communicate with
                                       bmRequestType, // the request type field for the setup packet
                                       0x01, // the request field for the setup packet
                                       0x00, // the value field for the setup packet
@@ -1318,7 +1341,7 @@ uint8_t PS3EYECam::ov534_reg_read(uint16_t reg)
 {
     uint8_t bmRequestType = LIBUSB_ENDPOINT_IN | LIBUSB_REQUEST_TYPE_VENDOR | LIBUSB_RECIPIENT_DEVICE;
 
-    int ret = libusb_control_transfer(handle_,
+    int ret = libusb_control_transfer(_handle,
                                       bmRequestType,
                                       0x01,
                                       0x00,
