@@ -195,23 +195,17 @@ std::vector<ofVideoDevice> ofxPS3EyeGrabber::listDevices() const
 {
     std::vector<ofVideoDevice> devices;
 
-    const auto& eyeDevices = ps3eye::PS3EYECam::getDevices();
-
-    auto iter = eyeDevices.begin();
-
-    int id = 0;
-
-    while (iter != eyeDevices.end())
+    for (const auto& camera: ps3eye::PS3EYECam::getDevices())
     {
         ofVideoDevice device;
-        device.id = id++;
+        device.id = camera->id(); // This is the USB Location ID.
         device.deviceName = "PS3-Eye";
-        device.hardwareName = "None"; // TODO: get from libusb.
-        device.serialID = ""; // TODO: get from libusb.
-        // device.formats.push_back(...) // Formats ... we could list all of them ... but ...
-        device.bAvailable = !(*iter)->isStreaming();;
+        device.hardwareName = "N/A"; // This is not provided by the PS3 Eye camera.
+        device.serialID = "N/A"; // This is not provided by the PS3 Eye camera.
+
+        // device.formats.push_back(...) // TODO: Listing all of these may not be helpful.
+        device.bAvailable = !camera->isStreaming();;
         devices.push_back(device);
-        ++iter;
     }
 
     return devices;
