@@ -155,7 +155,7 @@ void ofxPS3EyeGrabber::exit(ofEventArgs& args)
 
 void ofxPS3EyeGrabber::start()
 {
-    if (_cam)
+    if (_cam != nullptr)
     {
         _cam->start();
         startThread();
@@ -167,7 +167,7 @@ void ofxPS3EyeGrabber::stop()
 {
     stopThread();
 
-    if (_cam)
+    if (_cam != nullptr)
     {
         _cam->stop();
     }
@@ -178,7 +178,7 @@ void ofxPS3EyeGrabber::threadedFunction()
 {
     while (isThreadRunning())
     {
-        if (_cam)
+        if (_cam != nullptr)
         {
             bool res = _cam->updateDevices();
 
@@ -257,7 +257,7 @@ void ofxPS3EyeGrabber::update()
 {
     _isFrameNew = false;
 
-    if (_cam)
+    if (_cam )
     {
         if (_cam->isNewFrame())
         {
@@ -340,7 +340,7 @@ void ofxPS3EyeGrabber::close()
 
 float ofxPS3EyeGrabber::getHeight() const
 {
-    if (_cam)
+    if (_cam != nullptr)
     {
         return _cam->getHeight();
     }
@@ -354,7 +354,7 @@ float ofxPS3EyeGrabber::getHeight() const
 
 float ofxPS3EyeGrabber::getWidth() const
 {
-    if (_cam)
+    if (_cam != nullptr)
     {
         return _cam->getWidth();
     }
@@ -420,7 +420,7 @@ void ofxPS3EyeGrabber::videoSettings()
 
 bool ofxPS3EyeGrabber::getAutogain() const
 {
-    if (_cam)
+    if (_cam != nullptr)
     {
         return _cam->getAutogain();
     }
@@ -434,7 +434,7 @@ bool ofxPS3EyeGrabber::getAutogain() const
 
 void ofxPS3EyeGrabber::setAutogain(bool val)
 {
-    if (_cam)
+    if (_cam != nullptr)
     {
         _cam->setAutogain(val);
     }
@@ -447,7 +447,7 @@ void ofxPS3EyeGrabber::setAutogain(bool val)
 
 bool ofxPS3EyeGrabber::getAutoWhiteBalance() const
 {
-    if (_cam)
+    if (_cam != nullptr)
     {
         return _cam->getAutoWhiteBalance();
     }
@@ -461,7 +461,7 @@ bool ofxPS3EyeGrabber::getAutoWhiteBalance() const
 
 void ofxPS3EyeGrabber::setAutoWhiteBalance(bool val)
 {
-    if (_cam)
+    if (_cam != nullptr)
     {
         _cam->setAutoWhiteBalance(val);
     }
@@ -474,7 +474,7 @@ void ofxPS3EyeGrabber::setAutoWhiteBalance(bool val)
 
 uint8_t ofxPS3EyeGrabber::getGain() const
 {
-    if (_cam)
+    if (_cam != nullptr)
     {
         return _cam->getGain();
     }
@@ -488,7 +488,7 @@ uint8_t ofxPS3EyeGrabber::getGain() const
 
 void ofxPS3EyeGrabber::setGain(uint8_t val)
 {
-    if (_cam)
+    if (_cam != nullptr)
     {
         _cam->setGain(val);
     }
@@ -501,7 +501,7 @@ void ofxPS3EyeGrabber::setGain(uint8_t val)
 
 uint8_t ofxPS3EyeGrabber::getExposure() const
 {
-    if (_cam)
+    if (_cam != nullptr)
     {
         return _cam->getExposure();
     }
@@ -515,7 +515,7 @@ uint8_t ofxPS3EyeGrabber::getExposure() const
 
 void ofxPS3EyeGrabber::setExposure(uint8_t val)
 {
-    if (_cam)
+    if (_cam != nullptr)
     {
         _cam->setExposure(val);
     }
@@ -528,7 +528,7 @@ void ofxPS3EyeGrabber::setExposure(uint8_t val)
 
 uint8_t ofxPS3EyeGrabber::getSharpness() const
 {
-    if (_cam)
+    if (_cam != nullptr)
     {
         return _cam->getSharpness();
     }
@@ -542,7 +542,7 @@ uint8_t ofxPS3EyeGrabber::getSharpness() const
 
 void ofxPS3EyeGrabber::setSharpness(uint8_t val)
 {
-    if (_cam)
+    if (_cam != nullptr)
     {
         _cam->setSharpness(val);
     }
@@ -555,7 +555,7 @@ void ofxPS3EyeGrabber::setSharpness(uint8_t val)
 
 uint8_t ofxPS3EyeGrabber::getContrast() const
 {
-    if (_cam)
+    if (_cam != nullptr)
     {
         return _cam->getContrast();
     }
@@ -569,7 +569,7 @@ uint8_t ofxPS3EyeGrabber::getContrast() const
 
 void ofxPS3EyeGrabber::setContrast(uint8_t val)
 {
-    if (_cam)
+    if (_cam != nullptr)
     {
         _cam->setContrast(val);
     }
@@ -582,7 +582,7 @@ void ofxPS3EyeGrabber::setContrast(uint8_t val)
 
 uint8_t ofxPS3EyeGrabber::getBrightness() const
 {
-    if (_cam)
+    if (_cam != nullptr)
     {
         return _cam->getBrightness();
     }
@@ -596,7 +596,7 @@ uint8_t ofxPS3EyeGrabber::getBrightness() const
 
 void ofxPS3EyeGrabber::setBrightness(uint8_t val)
 {
-    if (_cam)
+    if (_cam != nullptr)
     {
         _cam->setBrightness(val);
     }
@@ -609,7 +609,7 @@ void ofxPS3EyeGrabber::setBrightness(uint8_t val)
 
 uint8_t ofxPS3EyeGrabber::getHue() const
 {
-    if (_cam)
+    if (_cam != nullptr)
     {
         return _cam->getHue();
     }
@@ -623,7 +623,7 @@ uint8_t ofxPS3EyeGrabber::getHue() const
 
 void ofxPS3EyeGrabber::setHue(uint8_t val)
 {
-    if (_cam)
+    if (_cam != nullptr)
     {
         _cam->setHue(val);
     }
@@ -636,7 +636,7 @@ void ofxPS3EyeGrabber::setHue(uint8_t val)
 
 uint8_t ofxPS3EyeGrabber::getRedBalance() const
 {
-    if (_cam)
+    if (_cam != nullptr)
     {
         return _cam->getRedBalance();
     }
@@ -650,7 +650,7 @@ uint8_t ofxPS3EyeGrabber::getRedBalance() const
 
 void ofxPS3EyeGrabber::setRedBalance(uint8_t val)
 {
-    if (_cam)
+    if (_cam != nullptr)
     {
         _cam->setRedBalance(val);
     }
@@ -663,7 +663,7 @@ void ofxPS3EyeGrabber::setRedBalance(uint8_t val)
 
 uint8_t ofxPS3EyeGrabber::getBlueBalance() const
 {
-    if (_cam)
+    if (_cam != nullptr)
     {
         return _cam->getBlueBalance();
     }
@@ -677,7 +677,7 @@ uint8_t ofxPS3EyeGrabber::getBlueBalance() const
 
 void ofxPS3EyeGrabber::setBlueBalance(uint8_t val)
 {
-    if (_cam)
+    if (_cam != nullptr)
     {
         _cam->setBlueBalance(val);
     }
@@ -690,7 +690,7 @@ void ofxPS3EyeGrabber::setBlueBalance(uint8_t val)
 
 uint8_t ofxPS3EyeGrabber::getGreenBalance() const
 {
-    if (_cam)
+    if (_cam != nullptr)
     {
         return _cam->getGreenBalance();
     }
@@ -704,7 +704,7 @@ uint8_t ofxPS3EyeGrabber::getGreenBalance() const
 
 void ofxPS3EyeGrabber::setGreenBalance(uint8_t val)
 {
-    if (_cam)
+    if (_cam != nullptr)
     {
         _cam->setGreenBalance(val);
     }
@@ -717,7 +717,7 @@ void ofxPS3EyeGrabber::setGreenBalance(uint8_t val)
 
 void ofxPS3EyeGrabber::setVerticalFlip(bool enable)
 {
-    if (_cam)
+    if (_cam != nullptr)
     {
         _cam->setVerticalFlip(enable);
     }
@@ -730,7 +730,7 @@ void ofxPS3EyeGrabber::setVerticalFlip(bool enable)
 
 void ofxPS3EyeGrabber::setHorizontalFlip(bool enable)
 {
-    if (_cam)
+    if (_cam != nullptr)
     {
         _cam->setHorizontalFlip(enable);
     }
@@ -743,7 +743,7 @@ void ofxPS3EyeGrabber::setHorizontalFlip(bool enable)
 
 void ofxPS3EyeGrabber::setTestPattern(bool enable)
 {
-    if (_cam)
+    if (_cam != nullptr)
     {
         _cam->setTestPattern(enable);
     }
@@ -756,7 +756,7 @@ void ofxPS3EyeGrabber::setTestPattern(bool enable)
 
 void ofxPS3EyeGrabber::setLED(bool enable)
 {
-    if (_cam)
+    if (_cam != nullptr)
     {
         _cam->setLED(enable);
     }
@@ -770,7 +770,7 @@ void ofxPS3EyeGrabber::setLED(bool enable)
 
 float ofxPS3EyeGrabber::getFPS() const
 {
-    if (_cam)
+    if (_cam != nullptr)
     {
         return _cam->getFrameRate();
     }
@@ -784,7 +784,7 @@ float ofxPS3EyeGrabber::getFPS() const
 
 float ofxPS3EyeGrabber::getActualFPS() const
 {
-    if (_cam)
+    if (_cam != nullptr)
     {
         return _cam->getActualFrameRate();
     }
