@@ -597,6 +597,8 @@ PS3EYECam::PS3EYECam(libusb_device *device):
     handle_(nullptr),
     urb(std::make_shared<URBDesc>())
 {
+    // Take ownership of device.
+    libusb_ref_device(_device);
 }
 
 

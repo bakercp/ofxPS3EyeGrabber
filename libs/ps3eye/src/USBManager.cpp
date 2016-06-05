@@ -40,7 +40,6 @@ std::vector<std::shared_ptr<ps3eye::PS3EYECam>> URBDesc::listDevices()
            desc.idProduct == ps3eye::PS3EYECam::PRODUCT_ID)
         {
             devices.push_back(std::make_shared<ps3eye::PS3EYECam>(dev));
-            libusb_ref_device(dev);
             cnt++;
         }
     }
