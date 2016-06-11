@@ -237,7 +237,7 @@ private:
     ofPixels _pixels;
 
     /// \brief The device id.
-    std::size_t _deviceId = 0;
+    std::size_t _deviceId = 0x00000000;
 
     /// \brief The requested framerate.
     int _requestedFrameRate = 60;
