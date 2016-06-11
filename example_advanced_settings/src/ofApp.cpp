@@ -55,7 +55,7 @@ void ofApp::setup()
 
 void ofApp::update()
 {
-	grabber.update();
+    grabber.update();
 }
 
 
@@ -69,8 +69,8 @@ void ofApp::draw()
     std::stringstream ss;
 
     ss << " App FPS: " << ofGetFrameRate() << std::endl;
-	ss << " Cam FPS: " << grabber.getGrabber<ofxPS3EyeGrabber>()->getFPS()  << std::endl;
-	ss << "Real FPS: " << grabber.getGrabber<ofxPS3EyeGrabber>()->getActualFPS();
+    ss << " Cam FPS: " << grabber.getGrabber<ofxPS3EyeGrabber>()->getFPS()  << std::endl;
+    ss << "Real FPS: " << grabber.getGrabber<ofxPS3EyeGrabber>()->getActualFPS();
 
     ofDrawBitmapStringHighlight(ss.str(), ofPoint(10, 15));
 

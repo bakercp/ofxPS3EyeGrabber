@@ -37,8 +37,8 @@ public:
     void update();
     void draw();
 
-	void keyPressed(int key);
+    void keyPressed(int key);
 
-	std::vector<std::shared_ptr<ofVideoGrabber>> grabbers;
+    std::vector<std::shared_ptr<ofVideoGrabber>> grabbers;
 
 };

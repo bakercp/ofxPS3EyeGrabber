@@ -37,7 +37,7 @@ void ofApp::setup()
 
 void ofApp::update()
 {
-	vidGrabber.update();
+    vidGrabber.update();
 }
 
 
