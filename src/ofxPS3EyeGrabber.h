@@ -41,7 +41,7 @@ class ofxPS3EyeGrabber:
 public:
     /// \brief Create an uninitialized ofxPS3EyeGrabber.
     /// \param deviceId The device id.
-    ofxPS3EyeGrabber(int deviceId = 0);
+    ofxPS3EyeGrabber(int deviceId = AUTO_CAMERA_ID);
 
     /// \brief Destroy the PS3EyeGrabber.
     virtual ~ofxPS3EyeGrabber();
@@ -184,6 +184,14 @@ public:
 
     /// \returns the camera's current actual FPS value.
     float getActualFPS() const;
+
+    enum
+    {
+        AUTO_CAMERA_ID = -1
+    };
+
+    /// \brief Create and configure a camera from a json configuration file.
+    static std::shared_ptr<ofxPS3EyeGrabber> fromJSON(const ofJson& json);
 
 protected:
     /// \brief Constant used for YUV conversion.

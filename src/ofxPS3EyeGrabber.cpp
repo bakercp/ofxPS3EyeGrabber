@@ -219,7 +219,7 @@ bool ofxPS3EyeGrabber::setup(int w, int h)
 
         for (const auto& device : eyeDevices)
         {
-            if (_deviceId == device->id())
+            if (_deviceId == AUTO_CAMERA_ID || _deviceId == device->id())
             {
                 _cam = device;
 
