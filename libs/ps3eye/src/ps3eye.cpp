@@ -1070,6 +1070,7 @@ double PS3EYECam::getActualFrameRate() const
     return 1.0 / _urb->smoothFrameDuration;
 }
 
+
 uint32_t PS3EYECam::getRowBytes() const
 {
     return frame_stride;
@@ -1085,6 +1086,18 @@ void PS3EYECam::setLED(bool enable)
 uint32_t PS3EYECam::id() const
 {
     return _id;
+}
+
+
+uint16_t PS3EYECam::sensorId() const
+{
+    return _sensor_id;
+}
+
+
+uint16_t PS3EYECam::manufacturerId() const
+{
+    return _manufacturer_id;
 }
 
 

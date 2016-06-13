@@ -200,7 +200,7 @@ std::vector<ofVideoDevice> ofxPS3EyeGrabber::listDevices() const
         ofVideoDevice device;
         device.id = camera->id(); // This is the USB Location ID.
         device.deviceName = "PS3-Eye";
-        device.hardwareName = "N/A"; // This is not provided by the PS3 Eye camera.
+        device.hardwareName = std::to_string(camera->sensorId()) + "-" + std::to_string(camera->manufacturerId()); // This is not provided by the PS3 Eye camera.
         device.serialID = "N/A"; // This is not provided by the PS3 Eye camera.
 
         // device.formats.push_back(...) // TODO: Listing all of these may not be helpful.
@@ -789,3 +789,17 @@ float ofxPS3EyeGrabber::getActualFPS() const
         return 0;
     }
 }
+
+
+std::shared_ptr<ofxPS3EyeGrabber> ofxPS3EyeGrabber::fromJSON(const ofJson& json)
+{
+    std::shared_ptr<ofxPS3EyeGrabber> grabber;
+
+
+
+
+    return grabber;
+}
+
+
+

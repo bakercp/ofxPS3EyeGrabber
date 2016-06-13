@@ -87,6 +87,10 @@ public:
 
     uint32_t id() const;
 
+    uint16_t sensorId() const;
+
+    uint16_t manufacturerId() const;
+
     static const std::vector<std::shared_ptr<PS3EYECam>>& getDevices(bool forceRefresh = false);
 
     bool updateDevices();

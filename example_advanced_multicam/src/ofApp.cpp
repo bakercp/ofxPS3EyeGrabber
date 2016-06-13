@@ -30,9 +30,9 @@ void ofApp::setup()
 {
     ofSetVerticalSync(true);
 
-    int camWidth = 320;
-    int camHeight = 240;
-    int camFrameRate = 15;
+    int camWidth = 640;
+    int camHeight = 480;
+    int camFrameRate = 24;
 
     // We can get a list of devices.
     std::vector<ofVideoDevice> devices = ofxPS3EyeGrabber().listDevices();
@@ -42,13 +42,18 @@ void ofApp::setup()
     {
         std::stringstream ss;
 
-        // Since the PS3Eye does not provide a serial number via its USB interface, the devices[i].id offers the
-        // next best alternative.  The devices[i].id is constructed from the USB topology and should remain constant
-        // over reboots as long as the USB topology remains the same (i.e. everything stays plugged into the same
-        // hubs, ports, etc).  For reference, this number should be equal to the Location ID on OSX and can be
-        // found in the System Profiler.
+        // Since the PS3Eye does not provide a serial number via its USB
+        // interface, the devices[i].id offers the next best alternative. The
+        // devices[i].id is constructed from the USB topology and should remain
+        // constant over reboots as long as the USB topology remains the same
+        // (i.e. everything stays plugged into the same hubs, ports, etc). For
+        // reference, this number should be equal to the Location ID on OSX and
+        // can be found in the System Profiler.
 
-        ss << "0x" << ofToHex(devices[i].id) << " : " << devices[i].deviceName << " : " << devices[i].serialID;
+        ss << "id: 0x" << ofToHex(devices[i].id) << " ";
+        ss << "name: " << devices[i].deviceName << " ";
+        ss << "hardware: " << devices[i].hardwareName << " ";
+        ss << "serial: " << devices[i].serialID;
 
         if (!devices[i].bAvailable)
         {
@@ -67,7 +72,7 @@ void ofApp::setup()
             //
             // The programmable renderer is able to directly render YUV422 pixels.
             // so be sure to that the OpenGL version is > 3.2, otherwise you'll
-            // get a blank screen.
+            // get a blank screen or perhaps a grayscale image.
             grabber->setPixelFormat(OF_PIXELS_NATIVE);
             grabber->setup(camWidth, camHeight);
 
@@ -115,11 +120,11 @@ void ofApp::draw()
 
         ofPopMatrix();
 
-        x += g->getWidth();
+        x += g->getWidth() / 2;
 
-        if (x + g->getWidth() >= ofGetWidth())
+        if (x + g->getWidth() / 2 >= ofGetWidth())
         {
-            y += g->getHeight();
+            y += g->getHeight() / 2;
             x = 0;
         }
     }
