@@ -252,7 +252,7 @@ void ofxPS3EyeGrabber::update()
 {
     _isFrameNew = false;
 
-    if (_cam )
+    if (_cam != nullptr)
     {
         if (_cam->isNewFrame())
         {

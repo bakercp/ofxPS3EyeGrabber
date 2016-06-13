@@ -55,28 +55,29 @@ public:
 
     // look for an input transfer endpoint in an alternate setting
     // libusb_endpoint_descriptor
-    static uint8_t find_ep(struct libusb_device *device);
+    static uint8_t find_endpoint(struct libusb_device *device);
 
-    uint8_t num_transfers;
+    uint8_t num_transfers = 0;
 
     gspca_packet_type last_packet_type;
 
-    uint32_t last_pts;
-    uint16_t last_fid;
+    uint32_t last_pts = 0;
+    uint16_t last_fid = 0;
 
     libusb_transfer* xfr[2];
 
-    uint8_t* frame_buffer;
-    uint8_t* frame_buffer_end;
-    uint8_t* frame_data_start;
-    std::size_t frame_data_len;
-    uint32_t frame_size;
-    uint8_t frame_complete_ind;
-    uint8_t frame_work_ind;
+    uint8_t* frame_buffer = nullptr;
+    uint8_t* frame_buffer_end = nullptr;
+    uint8_t* frame_data_start = nullptr;
+    std::size_t frame_data_len = 0;
+    uint32_t frame_size = 0;
+    uint8_t frame_complete_ind = 0;
+    uint8_t frame_work_ind = 0;
 
     std::chrono::time_point<std::chrono::high_resolution_clock> last_frame_time;
 
     std::chrono::duration<double> frameDuration;
+    
     double smoothFrameDuration = -1;
 
 };

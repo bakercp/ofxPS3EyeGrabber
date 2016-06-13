@@ -16,8 +16,8 @@ std::vector<std::shared_ptr<ps3eye::PS3EYECam>> URBDesc::listDevices()
 
     libusb_init(nullptr);
 
-    libusb_device *dev;
-    libusb_device **devs;
+    libusb_device* dev = nullptr;
+    libusb_device** devs = nullptr;
 
     ssize_t cnt = libusb_get_device_list(nullptr, &devs);
 
@@ -65,18 +65,20 @@ URBDesc::URBDesc():
     // we allocate max possible size
     // 16 frames
 
-    std::size_t stride = 640 * 2;
-    const std::size_t fsz = stride * 480;
+    const std::size_t transfer_size = 16384;
+    const std::size_t numFramesToAllocate = 16;
+    const std::size_t stride = 640 * 2;
+    const std::size_t frameSize = stride * 480;
 
-    frame_buffer = new uint8_t[fsz * 16 + 16384 * 2];
+    frame_buffer = new uint8_t[frameSize * numFramesToAllocate + transfer_size * 2];
 
-    frame_buffer_end = frame_buffer + fsz * 16;
+    frame_buffer_end = frame_buffer + frameSize * numFramesToAllocate;
 
     frame_data_start = frame_buffer;
     frame_data_len = 0;
     frame_complete_ind = 0;
     frame_work_ind = 0;
-    frame_size = fsz;
+    frame_size = frameSize;
 }
 
 
@@ -100,21 +102,22 @@ URBDesc::~URBDesc()
 }
 
 
-bool URBDesc::start_transfers(libusb_device_handle *handle, uint32_t curr_frame_size)
+bool URBDesc::start_transfers(libusb_device_handle *handle,
+                              uint32_t curr_frame_size)
 {
-    const std::size_t bsize = 16384;
+    const std::size_t transfer_size = 16384;
 
     frame_size = curr_frame_size;
 
     uint8_t* buff = frame_buffer_end;
-    uint8_t* buff1 = buff + bsize;
+    uint8_t* buff1 = buff + transfer_size;
 
-    std::memset(frame_buffer_end, 0, bsize * 2);
+    std::memset(frame_buffer_end, 0, transfer_size * 2);
 
     xfr[0] = libusb_alloc_transfer(0);
     xfr[1] = libusb_alloc_transfer(0);
 
-    uint8_t ep_addr = find_ep(libusb_get_device(handle));
+    uint8_t ep_addr = find_endpoint(libusb_get_device(handle));
 
     libusb_clear_halt(handle, ep_addr);
 
@@ -122,7 +125,7 @@ bool URBDesc::start_transfers(libusb_device_handle *handle, uint32_t curr_frame_
                               handle,
                               ep_addr,
                               buff,
-                              bsize,
+                              transfer_size,
                               cb_xfr,
                               reinterpret_cast<void*>(this),
                               0);
@@ -131,7 +134,7 @@ bool URBDesc::start_transfers(libusb_device_handle *handle, uint32_t curr_frame_
                               handle,
                               ep_addr,
                               buff1,
-                              bsize,
+                              transfer_size,
                               cb_xfr,
                               reinterpret_cast<void*>(this),
                               0);
@@ -242,6 +245,7 @@ void URBDesc::pkt_scan(uint8_t *data, std::size_t len)
     std::size_t remaining_len = len;
 
     const std::size_t payload_len = 2048; // bulk type
+    const std::size_t uvc_header_length = 12;
 
     do
     {
@@ -253,7 +257,7 @@ void URBDesc::pkt_scan(uint8_t *data, std::size_t len)
         // the correct number of bytes.
 
         // Verify UVC header.  Header length is always 12
-        if (data[0] != 12 || len < 12)
+        if (data[0] != uvc_header_length || len < uvc_header_length)
         {
             debug("bad header\n");
             goto discard;
@@ -291,24 +295,24 @@ void URBDesc::pkt_scan(uint8_t *data, std::size_t len)
             last_fid = this_fid;
 
             // Add the frame, minus the UVC header.
-            frame_add(FIRST_PACKET, data + 12, len - 12);
+            frame_add(FIRST_PACKET, data + uvc_header_length, len - uvc_header_length);
 
         } // If this packet is marked as EOF, end the frame
         else if (data[1] & UVC_STREAM_EOF)
         {
             last_pts = 0;
 
-            if (frame_data_len + len - 12 != frame_size)
+            if (frame_data_len + len - uvc_header_length != frame_size)
             {
                 goto discard;
             }
 
-            frame_add(LAST_PACKET, data + 12, len - 12);
+            frame_add(LAST_PACKET, data + uvc_header_length, len - uvc_header_length);
         }
         else
         {
             // Add the data from this payload
-            frame_add(INTER_PACKET, data + 12, len - 12);
+            frame_add(INTER_PACKET, data + uvc_header_length, len - uvc_header_length);
         }
 
         // Done this payload
@@ -362,21 +366,22 @@ void URBDesc::cb_xfr(struct libusb_transfer* xfr)
 }
 
 
-uint8_t URBDesc::find_ep(struct libusb_device* device)
+uint8_t URBDesc::find_endpoint(struct libusb_device* device)
 {
     const struct libusb_interface_descriptor* altsetting = nullptr;
-    const struct libusb_endpoint_descriptor* ep  = nullptr;
+    const struct libusb_endpoint_descriptor* endpoint  = nullptr;
     struct libusb_config_descriptor* config = nullptr;
-    uint8_t ep_addr = 0;
+
+    uint8_t endpointAddress = 0;
 
     libusb_get_active_config_descriptor(device, &config);
 
-    if (!config)
+    if (config == nullptr)
     {
         return 0;
     }
 
-    for (uint8_t i = 0; i < config->bNumInterfaces; i++)
+    for (uint8_t i = 0; i < config->bNumInterfaces; ++i)
     {
         altsetting = config->interface[i].altsetting;
 
@@ -388,14 +393,15 @@ uint8_t URBDesc::find_ep(struct libusb_device* device)
 
     if (altsetting != nullptr)
     {
-        for (uint8_t i = 0; i < altsetting->bNumEndpoints; i++)
+        for (uint8_t i = 0; i < altsetting->bNumEndpoints; ++i)
         {
-            ep = &altsetting->endpoint[i];
+            endpoint = &altsetting->endpoint[i];
 
-            if ((ep->bmAttributes & LIBUSB_TRANSFER_TYPE_MASK) == LIBUSB_TRANSFER_TYPE_BULK
-                && ep->wMaxPacketSize != 0)
+            int isBulkTransfer = (endpoint->bmAttributes & LIBUSB_TRANSFER_TYPE_MASK) == LIBUSB_TRANSFER_TYPE_BULK;
+
+            if (isBulkTransfer && endpoint->wMaxPacketSize != 0)
             {
-                ep_addr = ep->bEndpointAddress;
+                endpointAddress = endpoint->bEndpointAddress;
                 break;
             }
         }
@@ -403,5 +409,5 @@ uint8_t URBDesc::find_ep(struct libusb_device* device)
 
     libusb_free_config_descriptor(config);
 
-    return ep_addr;
+    return endpointAddress;
 }

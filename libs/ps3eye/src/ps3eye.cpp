@@ -563,6 +563,7 @@ const std::vector<std::shared_ptr<PS3EYECam>>& PS3EYECam::getDevices(bool forceR
     devices = URBDesc::listDevices();
 
     devicesEnumerated = true;
+    
     return devices;
 }
 
@@ -598,7 +599,7 @@ PS3EYECam::PS3EYECam(libusb_device *device):
     _urb(std::make_shared<URBDesc>()),
     _sensor_id(0),
     _manufacturer_id(0),
-    _id(0)
+    _id(0x00000000)
 {
     // Take ownership of device.
     libusb_ref_device(_device);
@@ -608,7 +609,9 @@ PS3EYECam::PS3EYECam(libusb_device *device):
 
     // This is equivalent to the Location ID on OSX.
     uint8_t portNumbers[8];
+    
     int numPorts = libusb_get_port_numbers(_device, portNumbers, 8);
+
     if (numPorts != LIBUSB_ERROR_OVERFLOW)
     {
         _id |= (libusb_get_bus_number(_device) << 24);
@@ -702,8 +705,10 @@ bool PS3EYECam::init(uint32_t width, uint32_t height, uint8_t desiredFrameRate)
     // initialize
     ov534_w_array(ov534_reg_initdata, ARRAY_SIZE(ov534_reg_initdata));
     ov534_set_led(1);
+
     sccb_w_array(ov772x_reg_initdata, ARRAY_SIZE(ov772x_reg_initdata));
     ov534_reg_write(OV534_REG_RESET0, 0x09);
+
     ov534_set_led(0);
 
     return true;
@@ -714,12 +719,14 @@ void PS3EYECam::start()
     if (is_streaming) return;
 
     if (frame_width == 320)
-    {    // 320x240
+    {
+        // 320x240
         ov534_w_array(bridge_start_qvga, ARRAY_SIZE(bridge_start_qvga));
         sccb_w_array(sensor_start_qvga, ARRAY_SIZE(sensor_start_qvga));
     }
     else
-    {    // 640x480
+    {
+        // 640x480
         ov534_w_array(bridge_start_vga, ARRAY_SIZE(bridge_start_vga));
         sccb_w_array(sensor_start_vga, ARRAY_SIZE(sensor_start_vga));
     }
@@ -740,8 +747,8 @@ void PS3EYECam::start()
     setHorizontalFlip(flip_h);
     setVerticalFlip(flip_v);
     setTestPattern(testPattern);
+    setLED(true);
 
-    ov534_set_led(1);
     ov534_reg_write(OV534_REG_RESET0, 0x00); // start stream
 
     // init and start urb
@@ -755,11 +762,11 @@ void PS3EYECam::start()
 
 void PS3EYECam::stop()
 {
-    if(!is_streaming) return;
+    if (!is_streaming) return;
 
     // stop streaming data
     ov534_reg_write(OV534_REG_RESET0, 0x09);
-    ov534_set_led(0);
+    setLED(false);
 
     // close urb
     _urb->close_transfers();
@@ -1083,7 +1090,7 @@ uint32_t PS3EYECam::id() const
 
 bool PS3EYECam::open_usb()
 {
-    // open, set first config and claim interface
+    // Open, set first config and claim interface.
     int res = libusb_open(_device, &_handle);
 
     if(res != 0)
@@ -1149,7 +1156,6 @@ uint8_t PS3EYECam::ov534_set_frame_rate(uint8_t frame_rate, bool dry_run)
     };
 
     const struct rate_s *r;
-
 
     // clock output 24 000 000 Hz.
 
@@ -1311,6 +1317,7 @@ uint8_t PS3EYECam::ov534_set_frame_rate(uint8_t frame_rate, bool dry_run)
     }
 
     debug("frame_rate: %d\n", r->fps);
+
     return r->fps;
 }
 
@@ -1331,10 +1338,12 @@ void PS3EYECam::ov534_reg_write(uint16_t reg, uint8_t val)
                                       CTRL_TIMEOUT // timeout (in millseconds) that this function should wait before giving up due to no response being received. For an unlimited timeout, use value 0.
                                       );
 
+#if defined(DEBUG)
     if (ret < 0)
     {
         debug("write failed\n");
     }
+#endif
 }
 
 uint8_t PS3EYECam::ov534_reg_read(uint16_t reg)
@@ -1353,10 +1362,12 @@ uint8_t PS3EYECam::ov534_reg_read(uint16_t reg)
 
 
     //debug("reg=0x%04x, data=0x%02x", reg, usb_buf[0]);
+#if defined(DEBUG)
     if (ret < 0)
     {
         debug("read failed\n");
     }
+#endif
 
     return usb_buf[0];
 }
@@ -1390,8 +1401,10 @@ void PS3EYECam::sccb_reg_write(uint8_t reg, uint8_t val)
     ov534_reg_write(OV534_REG_DO, val);
     ov534_reg_write(OV534_REG_CTRL, OV534_OP_WRITE_3);
 
+#if defined(DEBUG)
     if (!sccb_check_status())
         debug("sccb_reg_write failed\n");
+#endif
 }
 
 
@@ -1400,13 +1413,21 @@ uint8_t PS3EYECam::sccb_reg_read(uint16_t reg)
     ov534_reg_write(OV534_REG_MS_ADDRESS, reg);
     ov534_reg_write(OV534_REG_CTRL, OV534_OP_WRITE_2);
 
+#if defined(DEBUG)
     if (!sccb_check_status())
+    {
         debug("sccb_reg_read failed 1\n");
+    }
+#endif
 
     ov534_reg_write(OV534_REG_CTRL, OV534_OP_READ_2);
 
+#if defined(DEBUG)
     if (!sccb_check_status())
+    {
         debug( "sccb_reg_read failed 2\n");
+    }
+#endif
 
     return ov534_reg_read(OV534_REG_DI);
 }
