@@ -114,12 +114,14 @@ bool URBDesc::start_transfers(libusb_device_handle *handle,
 
     std::memset(frame_buffer_end, 0, transfer_size * 2);
 
-    xfr[0] = libusb_alloc_transfer(0);
-    xfr[1] = libusb_alloc_transfer(0);
-
     uint8_t ep_addr = find_endpoint(libusb_get_device(handle));
 
+    int res = LIBUSB_SUCCESS;
+
     libusb_clear_halt(handle, ep_addr);
+
+    xfr[0] = libusb_alloc_transfer(0);
+    xfr[1] = libusb_alloc_transfer(0);
 
     libusb_fill_bulk_transfer(xfr[0],
                               handle,
@@ -138,8 +140,6 @@ bool URBDesc::start_transfers(libusb_device_handle *handle,
                               cb_xfr,
                               reinterpret_cast<void*>(this),
                               0);
-
-    int res = LIBUSB_SUCCESS;
 
     res |= libusb_submit_transfer(xfr[0]);
     res |= libusb_submit_transfer(xfr[1]);
