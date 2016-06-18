@@ -34,7 +34,7 @@ void ofApp::setup()
     grabber.setGrabber(std::make_shared<ofxPS3EyeGrabber>());
 
     // These are all settings that can be set for any ofVideoGrabber.
-    grabber.setDeviceID(0);
+    // grabber.setDeviceID(0x00000000);
 
     // The native pixel format for the ofxPS3EyeGrabber is OF_PIXELS_YUY2
     // (aka YUV422).  When used this way, no additional pixel copies are made
@@ -69,8 +69,9 @@ void ofApp::draw()
     std::stringstream ss;
 
     ss << " App FPS: " << ofGetFrameRate() << std::endl;
-    ss << " Cam FPS: " << grabber.getGrabber<ofxPS3EyeGrabber>()->getFPS()  << std::endl;
-    ss << "Real FPS: " << grabber.getGrabber<ofxPS3EyeGrabber>()->getActualFPS();
+    ss << " Cam FPS: " << grabber.getGrabber<ofxPS3EyeGrabber>()->getFPS() << std::endl;
+    ss << "Real FPS: " << grabber.getGrabber<ofxPS3EyeGrabber>()->getActualFPS() << std::endl;
+    ss << "      id: 0x" << ofToHex(grabber.getGrabber<ofxPS3EyeGrabber>()->getDeviceId());
 
     ofDrawBitmapStringHighlight(ss.str(), ofPoint(10, 15));
 

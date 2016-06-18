@@ -41,4 +41,10 @@ public:
 
     std::vector<std::shared_ptr<ofVideoGrabber>> grabbers;
 
+    int totalHeight = 0;
+
+    int camWidth = 640;
+    int camHeight = 480;
+    int camFrameRate = 15;
+
 };

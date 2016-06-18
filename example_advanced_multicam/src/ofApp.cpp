@@ -30,10 +30,6 @@ void ofApp::setup()
 {
     ofSetVerticalSync(true);
 
-    int camWidth = 640;
-    int camHeight = 480;
-    int camFrameRate = 24;
-
     // We can get a list of devices.
     std::vector<ofVideoDevice> devices = ofxPS3EyeGrabber().listDevices();
 
@@ -66,14 +62,14 @@ void ofApp::setup()
             grabber->setGrabber(std::make_shared<ofxPS3EyeGrabber>(devices[i].id));
             grabber->setDesiredFrameRate(camFrameRate);
 
-            // The native pixel format for the ofxPS3EyeGrabber is OF_PIXELS_YUY2
-            // (aka YUV422).  When used this way, no additional pixel copies are made
-            // or colorspace conversions are performed.
+            // The native pixel format for the ofxPS3EyeGrabber is
+            // OF_PIXELS_YUY2 (aka YUV422).  When used this way, no additional
+            // pixel copies are made or colorspace conversions are performed.
             //
-            // The programmable renderer is able to directly render YUV422 pixels.
-            // so be sure to that the OpenGL version is > 3.2, otherwise you'll
-            // get a blank screen or perhaps a grayscale image.
-            grabber->setPixelFormat(OF_PIXELS_NATIVE);
+            // The programmable renderer is able to directly render YUV422
+            // pixels, so be sure to that the OpenGL version is > 3.2, otherwise
+            // you'll get a blank screen or perhaps a grayscale image.
+            //grabber->setPixelFormat(OF_PIXELS_NATIVE);
             grabber->setup(camWidth, camHeight);
 
             // Make ofxPS3EyeGrabber-specific settings updates.
@@ -85,6 +81,9 @@ void ofApp::setup()
 
         ofLogNotice("ofApp::setup") << ss.str();
     }
+
+    totalHeight = grabbers.size() * camHeight;
+
 }
 
 
@@ -100,13 +99,15 @@ void ofApp::draw()
     ofBackground(0);
     ofSetColor(255);
 
+    float yOffset = ofMap(ofGetMouseY(), 0, ofGetHeight(), 0, totalHeight - camHeight, true);
+
     int x = 0;
     int y = 0;
 
     for (auto& g: grabbers)
     {
         ofPushMatrix();
-        ofTranslate(x, y);
+        ofTranslate(x, y - yOffset);
 
         g->draw(0, 0);
 
@@ -114,39 +115,51 @@ void ofApp::draw()
 
         ss << " App FPS: " << ofGetFrameRate() << std::endl;
         ss << " Cam FPS: " << g->getGrabber<ofxPS3EyeGrabber>()->getFPS() << std::endl;
-        ss << "Real FPS: " << g->getGrabber<ofxPS3EyeGrabber>()->getActualFPS();
+        ss << "Real FPS: " << g->getGrabber<ofxPS3EyeGrabber>()->getActualFPS() << std::endl;
+        ss << "      id: 0x" << ofToHex(g->getGrabber<ofxPS3EyeGrabber>()->getDeviceId());
 
         ofDrawBitmapStringHighlight(ss.str(), ofPoint(10, 15));
 
+
         ofPopMatrix();
 
-        x += g->getWidth() / 2;
+        x += g->getWidth();
 
-        if (x + g->getWidth() / 2 >= ofGetWidth())
+        if (x + g->getWidth() >= ofGetWidth())
         {
-            y += g->getHeight() / 2;
+            y += g->getHeight();
             x = 0;
         }
     }
+
+    std::stringstream ss;
+
+    ss << "Mouse: Scroll through cameras." << std::endl;
+    ss << "  h/H: Toggle Horizontal Flip" << std::endl;
+    ss << "  v/V: Toggle Vertical Flip" << std::endl;
+    ss << "  t/T: Toggle Test Pattern" << std::endl;
+    ss << "  l/L: Toggle LED";
+
+    ofDrawBitmapStringHighlight(ss.str(), ofGetWidth() - 250, 16);
 }
 
 void ofApp::keyPressed(int key)
 {
     if (key == 'h')
     {
-        for (auto& g: grabbers) g->getGrabber<ofxPS3EyeGrabber>()->setHorizontalFlip(true);
+        for (auto& g: grabbers) g->getGrabber<ofxPS3EyeGrabber>()->setFlipHorizontal(true);
     }
     else if (key == 'H')
     {
-        for (auto& g: grabbers) g->getGrabber<ofxPS3EyeGrabber>()->setHorizontalFlip(false);
+        for (auto& g: grabbers) g->getGrabber<ofxPS3EyeGrabber>()->setFlipHorizontal(false);
     }
     else if (key == 'v')
     {
-        for (auto& g: grabbers) g->getGrabber<ofxPS3EyeGrabber>()->setVerticalFlip(true);
+        for (auto& g: grabbers) g->getGrabber<ofxPS3EyeGrabber>()->setFlipVertical(true);
     }
     else if (key == 'V')
     {
-        for (auto& g: grabbers) g->getGrabber<ofxPS3EyeGrabber>()->setVerticalFlip(false);
+        for (auto& g: grabbers) g->getGrabber<ofxPS3EyeGrabber>()->setFlipVertical(false);
     }
     else if (key == 't')
     {
@@ -155,5 +168,13 @@ void ofApp::keyPressed(int key)
     else if (key == 'T')
     {
         for (auto& g: grabbers) g->getGrabber<ofxPS3EyeGrabber>()->setTestPattern(false);
+    }
+    else if (key == 'l')
+    {
+        for (auto& g: grabbers) g->getGrabber<ofxPS3EyeGrabber>()->setLED(true);
+    }
+    else if (key == 'L')
+    {
+        for (auto& g: grabbers) g->getGrabber<ofxPS3EyeGrabber>()->setLED(false);
     }
 }
