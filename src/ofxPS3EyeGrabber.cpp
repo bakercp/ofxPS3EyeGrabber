@@ -133,7 +133,7 @@ void ofxPS3EyeGrabber::yuv422_to_rgb888(const uint8_t* yuv_src,
 }
 
 
-ofxPS3EyeGrabber::ofxPS3EyeGrabber(int deviceId): _deviceId(deviceId)
+ofxPS3EyeGrabber::ofxPS3EyeGrabber(int requestedDeviceId): _requestedDeviceId(requestedDeviceId)
 {
     ofAddListener(ofEvents().exit, this, &ofxPS3EyeGrabber::exit);
 }
@@ -191,6 +191,20 @@ void ofxPS3EyeGrabber::threadedFunction()
 }
 
 
+int ofxPS3EyeGrabber::getDeviceId() const
+{
+    if (_cam != nullptr)
+    {
+        return static_cast<int>(_cam->id());
+    }
+    else
+    {
+        ofLogWarning("ofxPS3EyeGrabber::getDeviceId") << "Camera is not initialized, requested id is " << _requestedDeviceId;
+        return _requestedDeviceId;
+    }
+}
+
+
 std::vector<ofVideoDevice> ofxPS3EyeGrabber::listDevices() const
 {
     std::vector<ofVideoDevice> devices;
@@ -219,7 +233,7 @@ bool ofxPS3EyeGrabber::setup(int w, int h)
 
         for (const auto& device : eyeDevices)
         {
-            if (_deviceId == AUTO_CAMERA_ID || _deviceId == device->id())
+            if (_requestedDeviceId == AUTO_CAMERA_ID || _requestedDeviceId == device->id())
             {
                 _cam = device;
 
@@ -237,7 +251,7 @@ bool ofxPS3EyeGrabber::setup(int w, int h)
             }
         }
 
-        ofLogWarning("ofxPS3EyeGrabber::setup") << "Device id was is not found: " << "0x" << ofToHex(_deviceId);
+        ofLogWarning("ofxPS3EyeGrabber::setup") << "Device id was is not found: " << "0x" << ofToHex(_requestedDeviceId);
         return false;
     }
     else
@@ -397,7 +411,7 @@ void ofxPS3EyeGrabber::setVerbose(bool verbose)
 
 void ofxPS3EyeGrabber::setDeviceID(int deviceId)
 {
-    _deviceId = deviceId;
+    _requestedDeviceId = deviceId;
 }
 
 
@@ -710,7 +724,7 @@ void ofxPS3EyeGrabber::setGreenBalance(uint8_t val)
 }
 
 
-void ofxPS3EyeGrabber::setVerticalFlip(bool enable)
+void ofxPS3EyeGrabber::setFlipVertical(bool enable)
 {
     if (_cam != nullptr)
     {
@@ -718,12 +732,18 @@ void ofxPS3EyeGrabber::setVerticalFlip(bool enable)
     }
     else
     {
-        ofLogWarning("ofxPS3EyeGrabber::setVerticalFlip") << "Camera is not initialized.";
+        ofLogWarning("ofxPS3EyeGrabber::setFlipVertical") << "Camera is not initialized.";
     }
 }
 
 
-void ofxPS3EyeGrabber::setHorizontalFlip(bool enable)
+void ofxPS3EyeGrabber::setVerticalFlip(bool enable)
+{
+    setFlipVertical(enable);
+}
+
+
+void ofxPS3EyeGrabber::setFlipHorizontal(bool enable)
 {
     if (_cam != nullptr)
     {
@@ -731,8 +751,14 @@ void ofxPS3EyeGrabber::setHorizontalFlip(bool enable)
     }
     else
     {
-        ofLogWarning("ofxPS3EyeGrabber::setHorizontalFlip") << "Camera is not initialized.";
+        ofLogWarning("ofxPS3EyeGrabber::setFlipHorizontal") << "Camera is not initialized.";
     }
+}
+
+
+void ofxPS3EyeGrabber::setHorizontalFlip(bool enable)
+{
+    setFlipHorizontal(enable);
 }
 
 
@@ -791,15 +817,102 @@ float ofxPS3EyeGrabber::getActualFPS() const
 }
 
 
-std::shared_ptr<ofxPS3EyeGrabber> ofxPS3EyeGrabber::fromJSON(const ofJson& json)
+std::shared_ptr<ofVideoGrabber> ofxPS3EyeGrabber::fromJSON(const ofJson& json)
 {
-    std::shared_ptr<ofxPS3EyeGrabber> grabber;
+    auto grabber = std::make_shared<ofVideoGrabber>();
+    grabber->setGrabber(std::make_shared<ofxPS3EyeGrabber>());
 
+    int width = -1;
+    int height = -1;
 
+    auto iter = json.cbegin();
+    while (iter != json.cend())
+    {
+        const auto& key = iter.key();
+        const auto& value = iter.value();
 
+        if (key == "id" && !value.is_null())
+        {
+            const auto& str = value.get<std::string>();
+
+            if (str == "auto") grabber->setDeviceID(ofxPS3EyeGrabber::AUTO_CAMERA_ID);
+            else if (str.substr(0, 2).compare("0x") == 0) grabber->setDeviceID(ofHexToInt(str));
+            else grabber->setDeviceID(ofToInt(str));
+        }
+
+        else if (key == "frame_rate") grabber->setDesiredFrameRate(value);
+        else if (key == "width") width = value;
+        else if (key == "height") height = value;
+        else if (key == "use_texture") grabber->setUseTexture(value);
+        else if (key == "pixel_format" && !value.is_null())
+        {
+            const auto& str = value.get<std::string>();
+            ofPixelFormat format = OF_PIXELS_RGB;
+            if (str.compare("OF_PIXELS_NATIVE") == 0) format = OF_PIXELS_NATIVE;
+            else if (str.compare("OF_PIXELS_RGB") == 0) format = OF_PIXELS_RGB;
+            else if (str.compare("OF_PIXELS_RGBA") == 0) format = OF_PIXELS_RGBA;
+            else if (str.compare("OF_PIXELS_YUY2") == 0) format = OF_PIXELS_YUY2;
+            else ofLogError() << "Unknown pixel_type: " << str;
+            grabber->setPixelFormat(format);
+        }
+        else if (key == "grabber")
+        {
+            // skip until after setup.
+        }
+        else ofLogWarning("ofxPS3EyeGrabber::fromJSON") << "Unknown key: " << key;
+
+        ++iter;
+    }
+
+    if (width == -1) width == ofxPS3EyeGrabber::DEFAULT_WIDTH;
+    if (height == -1) height == ofxPS3EyeGrabber::DEFAULT_HEIGHT;
+
+    if (!grabber->setup(width, height))
+    {
+        ofLogWarning("ofxPS3EyeGrabber::fromJSON") << "Setup failed.";
+    }
+    else
+    {
+        auto iter = json.cbegin();
+        while (iter != json.cend())
+        {
+            const auto& key = iter.key();
+            const auto& value = iter.value();
+
+            if (key == "grabber")
+            {
+                auto iter_grabber = value.cbegin();
+                while (iter_grabber != value.cend())
+                {
+                    const auto& key_grabber = iter_grabber.key();
+                    const auto& value_grabber = iter_grabber.value();
+
+                    auto grabber_grabber = grabber->getGrabber<ofxPS3EyeGrabber>();
+
+                    if (key_grabber == "type") { /* not used */ }
+                    else if (key_grabber == "auto_gain") grabber_grabber->setAutogain(value_grabber);
+                    else if (key_grabber == "auto_white_balance") grabber_grabber->setAutoWhiteBalance(value_grabber);
+                    else if (key_grabber == "gain") grabber_grabber->setGain(value_grabber);
+                    else if (key_grabber == "exposure") grabber_grabber->setExposure(value_grabber);
+                    else if (key_grabber == "sharpness") grabber_grabber->setSharpness(value_grabber);
+                    else if (key_grabber == "hue") grabber_grabber->setHue(value_grabber);
+                    else if (key_grabber == "brightness") grabber_grabber->setBrightness(value_grabber);
+                    else if (key_grabber == "contrast") grabber_grabber->setContrast(value_grabber);
+                    else if (key_grabber == "red_balance") grabber_grabber->setRedBalance(value_grabber);
+                    else if (key_grabber == "green_balance") grabber_grabber->setGreenBalance(value_grabber);
+                    else if (key_grabber == "blue_balance") grabber_grabber->setBlueBalance(value_grabber);
+                    else if (key_grabber == "flip_horizontal") grabber_grabber->setFlipHorizontal(value_grabber);
+                    else if (key_grabber == "flip_vertical") grabber_grabber->setFlipVertical(value_grabber);
+                    else if (key_grabber == "test_pattern") grabber_grabber->setTestPattern(value_grabber);
+                    else if (key_grabber == "enable_led") grabber_grabber->setLED(value_grabber);
+                    else ofLogWarning("ofxPS3EyeGrabber::fromJSON") << "Unknown grabber key: " << key_grabber;
+                    ++iter_grabber;
+                }
+            }
+            
+            ++iter;
+        }
+    }
 
     return grabber;
 }
-
-
-

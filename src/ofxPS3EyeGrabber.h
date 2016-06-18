@@ -30,6 +30,7 @@
 #include "ofTypes.h"
 #include "ofEvents.h"
 #include "ofThread.h"
+#include "ofVideoGrabber.h"
 #include "ps3eye.h"
 
 
@@ -85,6 +86,8 @@ public:
     void videoSettings() override;
 
     void threadedFunction() override;
+
+    int getDeviceId() const;
 
     /// \returns true iff auto gain is enabled.
     bool getAutogain() const;
@@ -165,11 +168,13 @@ public:
 
     /// \brief Flip the camera's image.
     /// \param enable true for a vertical flip.
-    void setVerticalFlip(bool enable);
+    void setFlipVertical(bool enable);
+    OF_DEPRECATED_MSG("Use setFlipVertical() instead", void setVerticalFlip(bool enable));
 
     /// \brief Flip the camera's image.
     /// \param enable true for a horizontal flip.
-    void setHorizontalFlip(bool enable);
+    void setFlipHorizontal(bool enable);
+    OF_DEPRECATED_MSG("Use setFlipHorizontal() instead", void setHorizontalFlip(bool enable));
 
     /// \brief Enable a test pattern overlay.
     /// \param enable true for a test pattern.
@@ -187,11 +192,16 @@ public:
 
     enum
     {
-        AUTO_CAMERA_ID = -1
+        /// \brief An automatic camera id will connect to the first available camera.
+        AUTO_CAMERA_ID = -1,
+        DEFAULT_WIDTH = 640,
+        DEFAULT_HEIGHT = 480
     };
 
-    /// \brief Create and configure a camera from a json configuration file.
-    static std::shared_ptr<ofxPS3EyeGrabber> fromJSON(const ofJson& json);
+    /// \brief Setup a ofxPS3EyeGrabber based ofVideoGrabber from JSON.
+    ///
+    /// \returns the configured and set up camera.
+    static std::shared_ptr<ofVideoGrabber> fromJSON(const ofJson& json);
 
 protected:
     /// \brief Constant used for YUV conversion.
@@ -245,7 +255,7 @@ private:
     ofPixels _pixels;
 
     /// \brief The device id.
-    std::size_t _deviceId = 0x00000000;
+    std::size_t _requestedDeviceId = AUTO_CAMERA_ID;
 
     /// \brief The requested framerate.
     int _requestedFrameRate = 60;
