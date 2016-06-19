@@ -35,13 +35,9 @@ The current drivers support the following resolutions and framerates:
 | 320x240       | 30 Hz         |       |
 
 
-If you specify a resolution larger than 640 x 480, it will default to 640x480.
-
-If you specify a resolution less than 640 x 480, it will default to 320 x 240.
-
 Frame rates greater than noted above will default to the next slowest valid frame rate.
 
-The number of cameras that can be used simultaneously at each framerate and resolution is limited by the 480Mbit/s data transfer rate of USB 2.0. To calculate possible values you can use the equation: width * height * FPS * # of cameras * 8 / 1,000,000. If the resulting value is less than 480 it is theoretically possible. In practice, it's been observed that values shouldn't exceed 80% of the 480Mbit/s limit to account for bandwidth and processing power.
+The number of cameras that can be used simultaneously at each framerate and resolution is limited by the 480Mbit/s data transfer rate of USB 2.0. This vaue is per USB bus, so if you have multiple USB busses (e.g. through additional PCI cards, etc), you can increase the number of cameras accordingly. In practice, it's been observed that the data rate usually maxes out around 384Mbit/s (about 80% of the theoretical maximum) which may be due to other items using the USB bus (pointing devices, keyboards, disks, etc), processing power or other factors.
 
 Linux
 =====
@@ -52,31 +48,26 @@ In order to use this on Linux, the kernel driver must be disabled to avoid confl
 sudo modprobe -r gspca_ov534
 ```
 
-If you would like the driver to remain disabled after a reboot, you can add it to your kernels blacklist file by creating /etc/modprobe.d/blacklist.conf and adding the following line
+If you would like the driver to remain disabled after a reboot, you can add it to your kernels blacklist file by creating
+
+```
+/etc/modprobe.d/blacklist.conf
+```
+
+and adding the following line
 
 ```
 blacklist gspca_ov534
 ```
 
-Currently this program must be run with sudo privileges in order for libusb to interface with the usb cameras. To run it as a regular user add a new udev rule for the cameras.
-
-First you must find out the 'idVendor' and 'idProduct' values that your computer assigns to the cameras. Plug one in and run
+The PS3 Eye camera has a USB vendor id of 1415 and a USB product id of 2000. To allow access without root permissions on a Debian linux variant (e.g. Ubuntu, Raspbian, etc) add a new [udev](https://en.wikipedia.org/wiki/Udev) rule for the cameras by creating a new file
 
 ```
-tail /var/log/messages
-```
-you should see somthing like this
-
-```
-Jun 10 17:18:54 scarf-end-2-0 kernel: [ 3004.677120] usb 1-1.4: new high-speed USB           device number 8 using dwc_otg
-Jun 10 17:18:54 scarf-end-2-0 kernel: [ 3004.779642] usb 1-1.4: New USB device found, idVendor=1415, idProduct=2000
-Jun 10 17:18:54 scarf-end-2-0 kernel: [ 3004.779665] usb 1-1.4: New USB device strings: Mfr=1, Product=2, SerialNumber=0
-Jun 10 17:18:54 scarf-end-2-0 kernel: [ 3004.779678] usb 1-1.4: Product: USB Camera-B4.09.24.1
-Jun 10 17:18:54 scarf-end-2-0 kernel: [ 3004.779692] usb 1-1.4: Manufacturer: OmniVision Technologies, Inc.
-Jun 10 17:18:54 scarf-end-2-0 kernel: [ 3004.785507] usb 1-1.4: current rate 1259 is different from the runtime rate 16000
+/etc/udev/rules.d/ps3_eye_camera.rules
 ```
 
-Create a new file /etc/udev/rules.d/camera.rules and add the following line, replacing my idVendor and idProduct values with yours.
+and add the following line:
+
 
 ```
 ATTR{idVendor}=="1415", ATTR{idProduct}=="2000", MODE+="777"
