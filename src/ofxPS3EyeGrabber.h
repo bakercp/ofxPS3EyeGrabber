@@ -26,6 +26,7 @@
 #pragma once
 
 
+#include "ofJson.h"
 #include "ofBaseTypes.h"
 #include "ofTypes.h"
 #include "ofEvents.h"
