@@ -10,6 +10,9 @@
 #include "ps3eye.h"
 
 
+/// \brief A URB is a USB request block.
+///
+/// \sa http://www.makelinux.net/ldd3/chp-13-sect-3
 class URBDesc
 {
 public:

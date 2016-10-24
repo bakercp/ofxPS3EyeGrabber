@@ -788,7 +788,6 @@ void ofxPS3EyeGrabber::setLED(bool enable)
 }
 
 
-
 float ofxPS3EyeGrabber::getFPS() const
 {
     if (_cam != nullptr)
@@ -824,6 +823,7 @@ std::shared_ptr<ofVideoGrabber> ofxPS3EyeGrabber::fromJSON(const ofJson& json)
 
     int width = -1;
     int height = -1;
+    bool isUsingTexture = false;
 
     auto iter = json.cbegin();
     while (iter != json.cend())
@@ -843,7 +843,7 @@ std::shared_ptr<ofVideoGrabber> ofxPS3EyeGrabber::fromJSON(const ofJson& json)
         else if (key == "frame_rate") grabber->setDesiredFrameRate(value);
         else if (key == "width") width = value;
         else if (key == "height") height = value;
-        else if (key == "use_texture") grabber->setUseTexture(value);
+        else if (key == "use_texture") isUsingTexture = value;
         else if (key == "pixel_format" && !value.is_null())
         {
             const auto& str = value.get<std::string>();
@@ -867,7 +867,7 @@ std::shared_ptr<ofVideoGrabber> ofxPS3EyeGrabber::fromJSON(const ofJson& json)
     if (width == -1) width == ofxPS3EyeGrabber::DEFAULT_WIDTH;
     if (height == -1) height == ofxPS3EyeGrabber::DEFAULT_HEIGHT;
 
-    if (!grabber->setup(width, height))
+    if (!grabber->setup(width, height, isUsingTexture))
     {
         ofLogWarning("ofxPS3EyeGrabber::fromJSON") << "Setup failed.";
     }

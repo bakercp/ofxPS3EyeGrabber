@@ -195,7 +195,11 @@ public:
     {
         /// \brief An automatic camera id will connect to the first available camera.
         AUTO_CAMERA_ID = -1,
+
+        /// \brief The default camera width.
         DEFAULT_WIDTH = 640,
+
+        /// \brief The default camera height.
         DEFAULT_HEIGHT = 480
     };
 
