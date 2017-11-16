@@ -137,7 +137,7 @@ void ofxPS3EyeGrabber::exit(ofEventArgs& args)
 
 void ofxPS3EyeGrabber::start()
 {
-    if (_cam != nullptr)
+    if (_cam)
     {
         _cam->start();
         startThread();
@@ -149,10 +149,7 @@ void ofxPS3EyeGrabber::stop()
 {
     stopThread();
 
-    if (_cam != nullptr)
-    {
-        _cam->stop();
-    }
+    if (_cam) _cam->stop();
 }
 
 
@@ -160,7 +157,7 @@ void ofxPS3EyeGrabber::threadedFunction()
 {
     while (isThreadRunning())
     {
-        if (_cam != nullptr)
+        if (_cam)
         {
             bool res = _cam->updateDevices();
 
@@ -175,15 +172,10 @@ void ofxPS3EyeGrabber::threadedFunction()
 
 int ofxPS3EyeGrabber::getDeviceId() const
 {
-    if (_cam != nullptr)
-    {
-        return static_cast<int>(_cam->id());
-    }
-    else
-    {
-        ofLogWarning("ofxPS3EyeGrabber::getDeviceId") << "Camera is not initialized, requested id is " << _requestedDeviceId;
-        return _requestedDeviceId;
-    }
+    if (_cam) return -1;//static_cast<int>(_cam->id());
+
+    ofLogWarning("ofxPS3EyeGrabber::getDeviceId") << "Camera is not initialized, requested id is " << _requestedDeviceId;
+    return _requestedDeviceId;
 }
 
 
@@ -236,11 +228,9 @@ bool ofxPS3EyeGrabber::setup(int w, int h)
         ofLogWarning("ofxPS3EyeGrabber::setup") << "Device id was is not found: " << "0x" << ofToHex(_requestedDeviceId);
         return false;
     }
-    else
-    {
-        ofLogWarning("ofxPS3EyeGrabber::setup") << "Camera is already initialized.";
-        return false;
-    }
+
+    ofLogWarning("ofxPS3EyeGrabber::setup") << "Camera is already initialized.";
+    return false;
 }
 
 
@@ -307,7 +297,7 @@ bool ofxPS3EyeGrabber::isFrameNew() const
 
 bool ofxPS3EyeGrabber::isInitialized() const
 {
-  return _cam != nullptr;
+    return _cam != nullptr;
 }
 
 
@@ -331,29 +321,19 @@ void ofxPS3EyeGrabber::close()
 
 float ofxPS3EyeGrabber::getHeight() const
 {
-    if (_cam != nullptr)
-    {
-        return _cam->getHeight();
-    }
-    else
-    {
-        ofLogWarning("ofxPS3EyeGrabber::getHeight") << "Camera is not initialized.";
-        return 0;
-    }
+    if (_cam) return _cam->getHeight();
+
+    ofLogWarning("ofxPS3EyeGrabber::getHeight") << "Camera is not initialized.";
+    return 0;
 }
 
 
 float ofxPS3EyeGrabber::getWidth() const
 {
-    if (_cam != nullptr)
-    {
-        return _cam->getWidth();
-    }
-    else
-    {
-        ofLogWarning("ofxPS3EyeGrabber::getWidth") << "Camera is not initialized.";
-        return 0;
-    }
+    if (_cam) return _cam->getWidth();
+
+    ofLogWarning("ofxPS3EyeGrabber::getWidth") << "Camera is not initialized.";
+    return 0;
 }
 
 
@@ -371,11 +351,10 @@ bool ofxPS3EyeGrabber::setPixelFormat(ofPixelFormat pixelFormat)
         _pixelFormat = pixelFormat;
         return true;
     }
-    else
-    {
-        ofLogWarning("ofxPS3EyeGrabber::setPixelFormat") << "setPixelFormat(): requested pixel format " << pixelFormat << " not supported";
-        return false;
-    }
+
+    
+    ofLogWarning("ofxPS3EyeGrabber::setPixelFormat") << "setPixelFormat(): requested pixel format " << pixelFormat << " not supported";
+    return false;
 }
 
 
@@ -393,12 +372,16 @@ void ofxPS3EyeGrabber::setVerbose(bool verbose)
 
 void ofxPS3EyeGrabber::setDeviceID(int deviceId)
 {
+    if (_cam) ofLogWarning("ofxPS3EyeGrabber::setDeviceID") << "Camera already initialized. Change will take place when camera is reinitialized.";
+
     _requestedDeviceId = deviceId;
 }
 
 
 void ofxPS3EyeGrabber::setDesiredFrameRate(int framerate)
 {
+    if (_cam) ofLogWarning("ofxPS3EyeGrabber::setDesiredFrameRate") << "Camera already initialized. Change will take place when camera is reinitialized.";
+    
     _requestedFrameRate = framerate;
 }
 
@@ -411,311 +394,194 @@ void ofxPS3EyeGrabber::videoSettings()
 
 bool ofxPS3EyeGrabber::getAutogain() const
 {
-    if (_cam != nullptr)
-    {
-        return _cam->getAutogain();
-    }
-    else
-    {
-        ofLogWarning("ofxPS3EyeGrabber::getAutogain") << "Camera is not initialized.";
-        return false;
-    }
+    if (_cam) return _cam->getAutogain();
+ 
+    ofLogWarning("ofxPS3EyeGrabber::getAutogain") << "Camera is not initialized.";
+    return false;
 }
 
 
 void ofxPS3EyeGrabber::setAutogain(bool val)
 {
-    if (_cam != nullptr)
-    {
-        _cam->setAutogain(val);
-    }
-    else
-    {
-        ofLogWarning("ofxPS3EyeGrabber::setAutogain") << "Camera is not initialized.";
-    }
+    if (_cam) _cam->setAutogain(val);
+
+    ofLogWarning("ofxPS3EyeGrabber::setAutogain") << "Camera is not initialized.";
 }
 
 
 bool ofxPS3EyeGrabber::getAutoWhiteBalance() const
 {
-    if (_cam != nullptr)
-    {
-        return _cam->getAutoWhiteBalance();
-    }
-    else
-    {
-        ofLogWarning("ofxPS3EyeGrabber::getAutoWhiteBalance") << "Camera is not initialized.";
-        return false;
-    }
+    if (_cam) return _cam->getAutoWhiteBalance();
+
+    ofLogWarning("ofxPS3EyeGrabber::getAutoWhiteBalance") << "Camera is not initialized.";
+    return false;
 }
 
 
 void ofxPS3EyeGrabber::setAutoWhiteBalance(bool val)
 {
-    if (_cam != nullptr)
-    {
-        _cam->setAutoWhiteBalance(val);
-    }
-    else
-    {
-        ofLogWarning("ofxPS3EyeGrabber::setAutoWhiteBalance") << "Camera is not initialized.";
-    }
+    if (_cam) _cam->setAutoWhiteBalance(val);
+
+    ofLogWarning("ofxPS3EyeGrabber::setAutoWhiteBalance") << "Camera is not initialized.";
 }
 
 
 uint8_t ofxPS3EyeGrabber::getGain() const
 {
-    if (_cam != nullptr)
-    {
-        return _cam->getGain();
-    }
-    else
-    {
-        ofLogWarning("ofxPS3EyeGrabber::getGain") << "Camera is not initialized.";
-        return false;
-    }
+    if (_cam) return _cam->getGain();
+
+    ofLogWarning("ofxPS3EyeGrabber::getGain") << "Camera is not initialized.";
+    return false;
 }
 
 
 void ofxPS3EyeGrabber::setGain(uint8_t val)
 {
-    if (_cam != nullptr)
-    {
-        _cam->setGain(val);
-    }
-    else
-    {
-        ofLogWarning("ofxPS3EyeGrabber::setGain") << "Camera is not initialized.";
-    }
+    if (_cam)  _cam->setGain(val);
+    
+    ofLogWarning("ofxPS3EyeGrabber::setGain") << "Camera is not initialized.";
 }
 
 
 uint8_t ofxPS3EyeGrabber::getExposure() const
 {
-    if (_cam != nullptr)
-    {
-        return _cam->getExposure();
-    }
-    else
-    {
-        ofLogWarning("ofxPS3EyeGrabber::getExposure") << "Camera is not initialized.";
-        return false;
-    }
+    if (_cam) return _cam->getExposure();
+
+    ofLogWarning("ofxPS3EyeGrabber::getExposure") << "Camera is not initialized.";
+    return false;
 }
 
 
 void ofxPS3EyeGrabber::setExposure(uint8_t val)
 {
-    if (_cam != nullptr)
-    {
-        _cam->setExposure(val);
-    }
-    else
-    {
-        ofLogWarning("ofxPS3EyeGrabber::setExposure") << "Camera is not initialized.";
-    }
+    if (_cam) _cam->setExposure(val);
+
+    ofLogWarning("ofxPS3EyeGrabber::setExposure") << "Camera is not initialized.";
 }
 
 
 uint8_t ofxPS3EyeGrabber::getSharpness() const
 {
-    if (_cam != nullptr)
-    {
-        return _cam->getSharpness();
-    }
-    else
-    {
-        ofLogWarning("ofxPS3EyeGrabber::getSharpness") << "Camera is not initialized.";
-        return false;
-    }
+    if (_cam)  return _cam->getSharpness();
+
+    ofLogWarning("ofxPS3EyeGrabber::getSharpness") << "Camera is not initialized.";
+    return false;
 }
 
 
 void ofxPS3EyeGrabber::setSharpness(uint8_t val)
 {
-    if (_cam != nullptr)
-    {
-        _cam->setSharpness(val);
-    }
-    else
-    {
-        ofLogWarning("ofxPS3EyeGrabber::setSharpness") << "Camera is not initialized.";
-    }
+    if (_cam) _cam->setSharpness(val);
+
+    ofLogWarning("ofxPS3EyeGrabber::setSharpness") << "Camera is not initialized.";
 }
 
 
 uint8_t ofxPS3EyeGrabber::getContrast() const
 {
-    if (_cam != nullptr)
-    {
-        return _cam->getContrast();
-    }
-    else
-    {
-        ofLogWarning("ofxPS3EyeGrabber::getContrast") << "Camera is not initialized.";
-        return false;
-    }
+    if (_cam) return _cam->getContrast();
+    
+    ofLogWarning("ofxPS3EyeGrabber::getContrast") << "Camera is not initialized.";
+    return false;
 }
 
 
 void ofxPS3EyeGrabber::setContrast(uint8_t val)
 {
-    if (_cam != nullptr)
-    {
-        _cam->setContrast(val);
-    }
-    else
-    {
-        ofLogWarning("ofxPS3EyeGrabber::setContrast") << "Camera is not initialized.";
-    }
+    if (_cam) _cam->setContrast(val);
+
+    ofLogWarning("ofxPS3EyeGrabber::setContrast") << "Camera is not initialized.";
 }
 
 
 uint8_t ofxPS3EyeGrabber::getBrightness() const
 {
-    if (_cam != nullptr)
-    {
-        return _cam->getBrightness();
-    }
-    else
-    {
-        ofLogWarning("ofxPS3EyeGrabber::getBrightness") << "Camera is not initialized.";
-        return false;
-    }
+    if (_cam) return _cam->getBrightness();
+
+    ofLogWarning("ofxPS3EyeGrabber::getBrightness") << "Camera is not initialized.";
+    return false;
 }
 
 
 void ofxPS3EyeGrabber::setBrightness(uint8_t val)
 {
-    if (_cam != nullptr)
-    {
-        _cam->setBrightness(val);
-    }
-    else
-    {
-        ofLogWarning("ofxPS3EyeGrabber::setBrightness") << "Camera is not initialized.";
-    }
+    if (_cam) _cam->setBrightness(val);
+
+    ofLogWarning("ofxPS3EyeGrabber::setBrightness") << "Camera is not initialized.";
 }
 
 
 uint8_t ofxPS3EyeGrabber::getHue() const
 {
-    if (_cam != nullptr)
-    {
-        return _cam->getHue();
-    }
-    else
-    {
-        ofLogWarning("ofxPS3EyeGrabber::getHue") << "Camera is not initialized.";
-        return false;
-    }
+    if (_cam) return _cam->getHue();
+
+    ofLogWarning("ofxPS3EyeGrabber::getHue") << "Camera is not initialized.";
+    return false;
 }
 
 
 void ofxPS3EyeGrabber::setHue(uint8_t val)
 {
-    if (_cam != nullptr)
-    {
-        _cam->setHue(val);
-    }
-    else
-    {
-        ofLogWarning("ofxPS3EyeGrabber::setHue") << "Camera is not initialized.";
-    }
+    if (_cam) _cam->setHue(val);
+
+    ofLogWarning("ofxPS3EyeGrabber::setHue") << "Camera is not initialized.";
 }
 
 
 uint8_t ofxPS3EyeGrabber::getRedBalance() const
 {
-    if (_cam != nullptr)
-    {
-        return _cam->getRedBalance();
-    }
-    else
-    {
-        ofLogWarning("ofxPS3EyeGrabber::getRedBalance") << "Camera is not initialized.";
-        return false;
-    }
+    if (_cam) return _cam->getRedBalance();
+
+    ofLogWarning("ofxPS3EyeGrabber::getRedBalance") << "Camera is not initialized.";
+    return false;
 }
 
 
 void ofxPS3EyeGrabber::setRedBalance(uint8_t val)
 {
-    if (_cam != nullptr)
-    {
-        _cam->setRedBalance(val);
-    }
-    else
-    {
-        ofLogWarning("ofxPS3EyeGrabber::setRedBalance") << "Camera is not initialized.";
-    }
+    if (_cam) _cam->setRedBalance(val);
+    ofLogWarning("ofxPS3EyeGrabber::setRedBalance") << "Camera is not initialized.";
 }
 
 
 uint8_t ofxPS3EyeGrabber::getBlueBalance() const
 {
-    if (_cam != nullptr)
-    {
-        return _cam->getBlueBalance();
-    }
-    else
-    {
-        ofLogWarning("ofxPS3EyeGrabber::getBlueBalance") << "Camera is not initialized.";
-        return false;
-    }
+    if (_cam) return _cam->getBlueBalance();
+
+    ofLogWarning("ofxPS3EyeGrabber::getBlueBalance") << "Camera is not initialized.";
+    return false;
 }
 
 
 void ofxPS3EyeGrabber::setBlueBalance(uint8_t val)
 {
-    if (_cam != nullptr)
-    {
-        _cam->setBlueBalance(val);
-    }
-    else
-    {
-        ofLogWarning("ofxPS3EyeGrabber::setBlueBalance") << "Camera is not initialized.";
-    }
+    if (_cam) _cam->setBlueBalance(val);
+
+    ofLogWarning("ofxPS3EyeGrabber::setBlueBalance") << "Camera is not initialized.";
 }
 
 
 uint8_t ofxPS3EyeGrabber::getGreenBalance() const
 {
-    if (_cam != nullptr)
-    {
-        return _cam->getGreenBalance();
-    }
-    else
-    {
-        ofLogWarning("ofxPS3EyeGrabber::getGreenBalance") << "Camera is not initialized.";
-        return false;
-    }
+    if (_cam) return _cam->getGreenBalance();
+
+    ofLogWarning("ofxPS3EyeGrabber::getGreenBalance") << "Camera is not initialized.";
 }
 
 
 void ofxPS3EyeGrabber::setGreenBalance(uint8_t val)
 {
-    if (_cam != nullptr)
-    {
-        _cam->setGreenBalance(val);
-    }
-    else
-    {
-        ofLogWarning("ofxPS3EyeGrabber::setGreenBalance") << "Camera is not initialized.";
-    }
+    if (_cam) _cam->setGreenBalance(val);
+
+    ofLogWarning("ofxPS3EyeGrabber::setGreenBalance") << "Camera is not initialized.";
 }
 
 
 void ofxPS3EyeGrabber::setFlipVertical(bool enable)
 {
-    if (_cam != nullptr)
-    {
-        _cam->setVerticalFlip(enable);
-    }
-    else
-    {
-        ofLogWarning("ofxPS3EyeGrabber::setFlipVertical") << "Camera is not initialized.";
-    }
+    if (_cam) _cam->setFlip(_cam->getFlipH(), enable);
+
+    ofLogWarning("ofxPS3EyeGrabber::setFlipVertical") << "Camera is not initialized.";
 }
 
 
@@ -727,14 +593,9 @@ void ofxPS3EyeGrabber::setVerticalFlip(bool enable)
 
 void ofxPS3EyeGrabber::setFlipHorizontal(bool enable)
 {
-    if (_cam != nullptr)
-    {
-        _cam->setHorizontalFlip(enable);
-    }
-    else
-    {
-        ofLogWarning("ofxPS3EyeGrabber::setFlipHorizontal") << "Camera is not initialized.";
-    }
+    if (_cam) _cam->setFlip(enable, _cam->getFlipV());
+
+    ofLogWarning("ofxPS3EyeGrabber::setFlipHorizontal") << "Camera is not initialized.";
 }
 
 
@@ -746,55 +607,35 @@ void ofxPS3EyeGrabber::setHorizontalFlip(bool enable)
 
 void ofxPS3EyeGrabber::setTestPattern(bool enable)
 {
-    if (_cam != nullptr)
-    {
-        _cam->setTestPattern(enable);
-    }
-    else
-    {
-        ofLogWarning("ofxPS3EyeGrabber::setTestPattern") << "Camera is not initialized.";
-    }
+    if (_cam) ;// _cam->setTestPattern(enable);
+
+    ofLogWarning("ofxPS3EyeGrabber::setTestPattern") << "Camera is not initialized.";
 }
 
 
 void ofxPS3EyeGrabber::setLED(bool enable)
 {
-    if (_cam != nullptr)
-    {
-        _cam->setLED(enable);
-    }
-    else
-    {
-        ofLogWarning("ofxPS3EyeGrabber::setFlip") << "Camera is not initialized.";
-    }
+    if (_cam) ;// _cam->setLED(enable);
+
+    ofLogWarning("ofxPS3EyeGrabber::setFlip") << "Camera is not initialized.";
 }
 
 
 float ofxPS3EyeGrabber::getFPS() const
 {
-    if (_cam != nullptr)
-    {
-        return _cam->getFrameRate();
-    }
-    else
-    {
-        ofLogWarning("ofxPS3EyeGrabber::getFPS") << "Camera is not initialized.";
-        return 0;
-    }
+    if (_cam) return _cam->getFrameRate();
+
+    ofLogWarning("ofxPS3EyeGrabber::getFPS") << "Camera is not initialized.";
+    return 0;
 }
 
 
 float ofxPS3EyeGrabber::getActualFPS() const
 {
-    if (_cam != nullptr)
-    {
-        return _cam->getActualFrameRate();
-    }
-    else
-    {
-        ofLogWarning("ofxPS3EyeGrabber::getActualFPS") << "Camera is not initialized.";
-        return 0;
-    }
+    if (_cam) return 0;//_cam->getActualFrameRate();
+
+    ofLogWarning("ofxPS3EyeGrabber::getActualFPS") << "Camera is not initialized.";
+    return 0;
 }
 
 
