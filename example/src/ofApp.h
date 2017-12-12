@@ -9,34 +9,16 @@
 
 
 #include "ofMain.h"
-#include "ps3eye.h"
-
-
-class Camera
-{
-public:
-    
-    ps3eye::PS3EYECam::PS3EYERef eye;
-    
-    ofTexture tex;
-    ofPixels pix;
-    
-    int camFrameCount;
-    int camFpsLastSampleFrame;
-    float camFpsLastSampleTime;
-    float camFps;
-
-};
+#include "ofxPS3EyeGrabber.h"
 
 
 class ofApp: public ofBaseApp
 {
 public:
-    void setup();
-    void update();
-    void draw();
-    void exit();
+    void setup() override;
+    void update() override;
+    void draw() override;
     
-    std::vector<Camera> cameras;
+    ofVideoGrabber grabber;
 
 };

@@ -186,7 +186,7 @@ public:
 	//
 	static const std::vector<PS3EYERef>& getDevices( bool forceRefresh = false );
 
-private:
+//private:
 	PS3EYECam(const PS3EYECam&);
     void operator=(const PS3EYECam&);
 
@@ -239,6 +239,8 @@ private:
 
 	bool open_usb();
 	void close_usb();
+    
+    int id;
     
     friend class ofxPS3EyeGrabber;
 

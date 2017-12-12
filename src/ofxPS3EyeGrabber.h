@@ -12,7 +12,7 @@
 #include "ofBaseTypes.h"
 #include "ofTypes.h"
 #include "ofEvents.h"
-#include "ofThread.h"
+#include "ofThreadChannel.h"
 #include "ofVideoGrabber.h"
 #include "ps3eye.h"
 
@@ -187,6 +187,10 @@ public:
     static std::shared_ptr<ofVideoGrabber> fromJSON(const ofJson& json);
 
 private:
+    static int _getLocationIdForDevice(libusb_device* device);
+    
+    ofEventListener _exitListener;
+
     /// \brief A shared pointer to the underlying camera device.
     std::shared_ptr<ps3eye::PS3EYECam> _cam;
 
@@ -210,6 +214,14 @@ private:
         /// \brief The default FPS sample interval in milliseconds.
         FPS_SAMPLE_INTERVAL = 500
     };
+
+    void _threadedFunction();
+    
+    std::atomic<bool> _isThreadRunning;
+    std::thread _thread;
+    ofThreadChannel<ofPixels> _pixelChannel;
+    
+    
 
 };
 

@@ -1,10 +1,29 @@
 // source code from https://github.com/inspirit/PS3EYEDriver
 #include "ps3eye.h"
 
+#include <iomanip>
+#include <sstream>
+#include <iostream>
 #include <thread>
 #include <mutex>
 #include <condition_variable>
 #include <atomic>
+
+template <class T>
+std::string toHex(const T& value) {
+    std::ostringstream out;
+    // pretend that the value is a bunch of bytes
+    unsigned char* valuePtr = (unsigned char*) &value;
+    // the number of bytes is determined by the datatype
+    int numBytes = sizeof(T);
+    // the bytes are stored backwards (least significant first)
+    for(int i = numBytes - 1; i >= 0; i--) {
+        // print each byte out as a 2-character wide hex value
+        out << std::setfill('0') << std::setw(2) << std::hex << (int) valuePtr[i];
+    }
+    return out.str();
+}
+
 
 #if defined WIN32 || defined _WIN32 || defined WINCE
 	#include <windows.h>
@@ -361,16 +380,25 @@ void USBMgr::cameraStopped()
 
 void USBMgr::startTransferThread()
 {
+   // std::cout << "USBMgr::startTransferThread" << std::endl;
+
 	update_thread = std::thread(&USBMgr::transferThreadFunc, this);
+    
+  //  std::cout <<  "USBMgr::startTransferThread EXIT" << std::endl;
+
 }
 
 void USBMgr::stopTransferThread()
 {
+  //  std::cout << "USBMgr::stopTransferThread" << std::endl;
 	exit_signaled = true;
 	update_thread.join();
 	// Reset the exit signal flag.
 	// If we don't and we call startTransferThread() again, transferThreadFunc will exit immediately.
-	exit_signaled = false;    
+	exit_signaled = false;
+    
+  //  std::cout << "USBMgr::stopTransferThread: EXIT" << std::endl;
+
 }
 
 void USBMgr::transferThreadFunc()
@@ -429,28 +457,37 @@ static void LIBUSB_CALL transfer_completed_callback(struct libusb_transfer *xfr)
 class FrameQueue
 {
 public:
-	FrameQueue(uint32_t frame_size) :
-		frame_size			(frame_size),
-		num_frames			(2),
-		frame_buffer		((uint8_t*)malloc(frame_size * num_frames)),
+	FrameQueue(uint32_t frame_size, int _id) :
+        id(_id),
+		//frame_size			(frame_size),
+		//num_frames			(8),
+		//frame_buffer		((uint8_t*)malloc(frame_size * num_frames)),
 		head				(0),
 		tail				(0),
 		available			(0)
 	{
+        for (int i  = 0; i < 2; ++i)
+            frame_buffer.push_back(std::vector<uint8_t>(frame_size, 0));
+
+      //  std::cout << toHex(id) << ": FrameQueue: Created" << std::endl;
 	}
 
 	~FrameQueue()
 	{
-		free(frame_buffer);
+   //     std::cout << toHex(id) << ": ~FrameQueue" << std::endl;
+		//free(frame_buffer);
+   //     std::cout << toHex(id) << ": ~FrameQueue: done" << std::endl;
 	}
 
 	uint8_t* GetFrameBufferStart()
 	{
-		return frame_buffer;
+		return frame_buffer[0].data();
 	}
 
 	uint8_t* Enqueue()
 	{
+   //     std::cout << toHex(id) << ": Enqueue()" << std::endl;
+        
 		uint8_t* new_frame = NULL;
 
 		std::lock_guard<std::mutex> lock(mutex);
@@ -461,38 +498,48 @@ public:
 		//
 		// Note that because the the producer is writing directly to the ring buffer, we can only ever be a maximum of num_frames-1 ahead of the consumer, 
 		// otherwise the producer could overwrite the frame the consumer is currently reading (in case of a slow consumer)
-		if (available >= num_frames - 1)
+		if (available >= frame_buffer.size() - 1)
 		{
-			return frame_buffer + head * frame_size;
+            return frame_buffer[head].data();// + head * frame_size;
 		}
 
 		// Note: we don't need to copy any data to the buffer since the USB packets are directly written to the frame buffer.
 		// We just need to update head and available count to signal to the consumer that a new frame is available
-		head = (head + 1) % num_frames;
+		head = (head + 1) % frame_buffer.size();
 		available++;
 
 		// Determine the next frame pointer that the producer should write to
-		new_frame = frame_buffer + head * frame_size;
+        new_frame = frame_buffer[head].data();//frame_buffer + head * frame_size;
 
 		// Signal consumer that data became available
 		empty_condition.notify_one();
+
+     //   std::cout << toHex(id) << ": Enqueue: FINISH() available: " << available << std::endl;
 
 		return new_frame;
 	}
 
 	void Dequeue(uint8_t* new_frame, int frame_width, int frame_height, PS3EYECam::EOutputFormat outputFormat)
-	{		
+	{
+        
+     //   std::cout << toHex(id) << ": Dequeue: 1 available:" << available << std::endl;
 		std::unique_lock<std::mutex> lock(mutex);
+
+      //  std::cout << toHex(id) << ": Dequeue: Waiting available:" << available << std::endl;
 
 		// If there is no data in the buffer, wait until data becomes available
 		empty_condition.wait(lock, [this] () { return available != 0; });
 
+     //   std::cout << toHex(id) << ": Dequeue: Done Waiting available:" << available << " tail: " << tail << std::endl;
+
 		// Copy from internal buffer
-		uint8_t* source = frame_buffer + frame_size * tail;
+        uint8_t* source = frame_buffer[tail].data();//frame_buffer + frame_size * tail;
+
+      //  std::cout << toHex(id) << ": Dequeue: De-bayering available:" << available << std::endl;
 
 		if (outputFormat == PS3EYECam::EOutputFormat::Bayer)
 		{
-			memcpy(new_frame, source, frame_size);
+			memcpy(new_frame, source, frame_buffer[tail].size());
 		}
 		else if (outputFormat == PS3EYECam::EOutputFormat::BGR ||
 				 outputFormat == PS3EYECam::EOutputFormat::RGB)
@@ -504,8 +551,11 @@ public:
 			DebayerGray(frame_width, frame_height, source, new_frame);
 		}
 		// Update tail and available count
-		tail = (tail + 1) % num_frames;
+		tail = (tail + 1) % frame_buffer.size();
 		available--;
+        
+     //   std::cout << toHex(id) << ": Dequeue: Finished available:" << available << std::endl;
+
 	}
 	
 	void DebayerGray(int frame_width, int frame_height, const uint8_t* inBayer, uint8_t* outBuffer)
@@ -639,6 +689,11 @@ public:
 				// Fill first pixel (green)
 				dest[-1*swap_br]	= (source[source_stride] + source[source_stride + 2] + 1) >> 1;
 				dest[0]				= source[source_stride + 1];
+
+//                std::cout << toHex(id) << ": " <<(source_stride * 2 + 1) << std::endl;
+                
+                //std::cout << toHex(id) << std::endl;
+                
 				dest[1*swap_br]		= (source[1] + source[source_stride * 2 + 1] + 1) >> 1;		
 
 				source++;
@@ -712,16 +767,19 @@ public:
 	}
 
 private:
-	uint32_t				frame_size;
-	uint32_t				num_frames;
+	//uint32_t				frame_size;
+	//uint32_t				num_frames;
 
-	uint8_t*				frame_buffer;
+	//uint8_t*				frame_buffer;
+    std::vector<std::vector<uint8_t>> frame_buffer;
 	uint32_t				head;
 	uint32_t				tail;
 	uint32_t				available;
 
 	std::mutex				mutex;
 	std::condition_variable	empty_condition;
+    
+    int id;
 };
 
 // URBDesc
@@ -729,7 +787,8 @@ private:
 class URBDesc
 {
 public:
-	URBDesc() : 
+	URBDesc(int _id) :
+        id (_id),
 		num_active_transfers			(0),
 		last_packet_type		(DISCARD_PACKET), 
 		last_pts				(0), 
@@ -752,7 +811,7 @@ public:
 	{
 		// Initialize the frame queue
         frame_size = curr_frame_size;
-		frame_queue = new FrameQueue(frame_size);
+		frame_queue = new FrameQueue(frame_size, id);
 
 		// Initialize the current frame pointer to the start of the buffer; it will be updated as frames are completed and pushed onto the frame queue
 		cur_frame_start = frame_queue->GetFrameBufferStart();
@@ -847,6 +906,7 @@ public:
             {
                 packet_type = DISCARD_PACKET;
                 cur_frame_data_len = 0;
+                
             } else {
                 memcpy(cur_frame_start+cur_frame_data_len, data, len);
                 cur_frame_data_len += len;
@@ -857,7 +917,9 @@ public:
 
 	    if (packet_type == LAST_PACKET) {        
 			cur_frame_data_len = 0;
+            //std::cout << toHex(id) << ": ENQUEUE" << std::endl;
 			cur_frame_start = frame_queue->Enqueue();
+            //std::cout << toHex(id) << ": ENQUEUE COMPLETE" << std::endl;
 	        //debug("frame completed %d\n", frame_complete_ind);
 	    }
 	}
@@ -950,11 +1012,16 @@ public:
 	uint32_t				cur_frame_data_len;
 	uint32_t				frame_size;
 	FrameQueue*				frame_queue;
+    
+    int id;
 };
 
 static void LIBUSB_CALL transfer_completed_callback(struct libusb_transfer *xfr)
 {
-    URBDesc *urb = reinterpret_cast<URBDesc*>(xfr->user_data);
+    URBDesc* urb = reinterpret_cast<URBDesc*>(xfr->user_data);
+    
+    //std::cout << toHex(urb->id) << " transfer_completed_callback" << std::endl;
+    
     enum libusb_transfer_status status = xfr->status;
 
     if (status != LIBUSB_TRANSFER_COMPLETED) 
@@ -999,6 +1066,33 @@ const std::vector<PS3EYECam::PS3EYERef>& PS3EYECam::getDevices( bool forceRefres
     return devices;
 }
 
+    int _getLocationIdForDevice(libusb_device* device)
+    {
+        // As per the USB 3.0 specs, the current maximum limit for the depth is 7.
+        uint8_t portNumbers[8];
+        
+        int numPorts = libusb_get_port_numbers(device, portNumbers, 8);
+        
+        if (numPorts != LIBUSB_ERROR_OVERFLOW)
+        {
+            int _id = 0;
+            
+            _id |= (libusb_get_bus_number(device) << 24);
+            
+            for (int i = 0; i < numPorts; ++i)
+            {
+                _id |= (portNumbers[i] << (20 - 4 * i));
+            }
+            
+            return _id;
+        }
+        
+        const char* pErrorString = libusb_error_name(numPorts);
+        std::cerr << (pErrorString ? std::string(pErrorString) : "Error getting location id for device.") << std::endl;
+        
+        return -1;
+    }
+
 PS3EYECam::PS3EYECam(libusb_device *device)
 {
 	// default controls
@@ -1023,13 +1117,20 @@ PS3EYECam::PS3EYECam(libusb_device *device)
 
 	device_ = device;
 	mgrPtr = USBMgr::instance();
-	urb = std::shared_ptr<URBDesc>( new URBDesc() );
+
+    id = _getLocationIdForDevice(device_);
+
+    urb = std::shared_ptr<URBDesc>( new URBDesc(id));
 }
 
 PS3EYECam::~PS3EYECam()
 {
+    //std::cout<< toHex(id) << ": destroying PS3 eye" << std::endl;
+    
 	stop();
 	release();
+
+    //std::cout << toHex(id) << ": destroying PS3 eye FINISHED" << std::endl;
 }
 
 void PS3EYECam::release()
