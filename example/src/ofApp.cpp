@@ -15,15 +15,15 @@ void ofApp::setup()
     
     std::vector<PS3EYECam::PS3EYERef> devices = PS3EYECam::getDevices();
     
-    for (std::size_t i = 0; i < 2/*devices.size()*/; ++i)
+    for (std::size_t i = 0; i < 4/*devices.size()*/; ++i)
     {
         cameras.push_back(Camera());
         cameras.back().eye = devices.at(i);
-        cameras.back().eye->init(320, 240, 187, PS3EYECam::EOutputFormat::Gray);
+        cameras.back().eye->init(640, 480, 60, PS3EYECam::EOutputFormat::BGR);
         cameras.back().eye->start();
         cameras.back().pix.allocate(cameras.back().eye->getWidth(),
                                     cameras.back().eye->getHeight(),
-                                    OF_PIXELS_GRAY);
+                                    OF_PIXELS_BGR);
         cameras.back().eye->setAutogain(true);
         cameras.back().eye->setAutoWhiteBalance(true);
     }

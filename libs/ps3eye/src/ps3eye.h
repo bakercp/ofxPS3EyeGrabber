@@ -239,6 +239,8 @@ private:
 
 	bool open_usb();
 	void close_usb();
+    
+    friend class ofxPS3EyeGrabber;
 
 };
 
