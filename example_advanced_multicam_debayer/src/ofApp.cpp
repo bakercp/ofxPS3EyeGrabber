@@ -16,7 +16,7 @@ void ofApp::setup()
     std::vector<ofVideoDevice> devices = ofxPS3EyeGrabber().listDevices();
 
     // Now cycle through the devices and set up grabbers for each.
-    for (std::size_t i = 0; i < 2;++i)//devices.size(); ++i)
+    for (std::size_t i = 0; i < devices.size(); ++i)
     {
         std::stringstream ss;
 
@@ -45,7 +45,10 @@ void ofApp::setup()
             grabber->setGrabber(std::make_shared<ofxPS3EyeGrabber>(devices[i].id));
             grabber->setDesiredFrameRate(camFrameRate);
 
-            grabber->setPixelFormat(OF_PIXELS_GRAY);
+//            grabber->setPixelFormat(OF_PIXELS_RGB);
+//            grabber->setPixelFormat(OF_PIXELS_BGR);
+//            grabber->setPixelFormat(OF_PIXELS_GRAY);
+//            grabber->setPixelFormat(OF_PIXELS_NATIVE);
             grabber->setup(camWidth, camHeight);
 
             // Make ofxPS3EyeGrabber-specific settings updates.
@@ -54,8 +57,6 @@ void ofApp::setup()
 
             grabbers.push_back(grabber);
             
-            std::cout << "pushing back grabber" << std::endl;
-
         }
 
         ofLogNotice("ofApp::setup") << ss.str();
@@ -69,6 +70,7 @@ void ofApp::update()
 {
     // Update all grabbers.
     for (auto& g: grabbers) g->update();
+
 }
 
 
@@ -112,10 +114,11 @@ void ofApp::draw()
     std::stringstream ss;
 
     ss << "Mouse: Scroll through cameras." << std::endl;
-    ss << "  h/H: Toggle Horizontal Flip" << std::endl;
-    ss << "  v/V: Toggle Vertical Flip" << std::endl;
-    ss << "  t/T: Toggle Test Pattern" << std::endl;
-    ss << "  l/L: Toggle LED";
+    ss << "    h: Toggle Horizontal Flip" << std::endl;
+    ss << "    v: Toggle Vertical Flip" << std::endl;
+    ss << "    t: Toggle Test Pattern" << std::endl;
+    ss << "  k/l: Toggle LED" << std::endl;
+    ss << "    d: Cycle Demosaicing Types";
 
     ofDrawBitmapStringHighlight(ss.str(), ofGetWidth() - 250, 16);
 }
@@ -124,34 +127,46 @@ void ofApp::keyPressed(int key)
 {
     if (key == 'h')
     {
-        for (auto& g: grabbers) g->getGrabber<ofxPS3EyeGrabber>()->setFlipHorizontal(true);
-    }
-    else if (key == 'H')
-    {
-        for (auto& g: grabbers) g->getGrabber<ofxPS3EyeGrabber>()->setFlipHorizontal(false);
+        for (auto& g: grabbers) g->getGrabber<ofxPS3EyeGrabber>()->setFlipHorizontal(!g->getGrabber<ofxPS3EyeGrabber>()->getFlipHorizontal());
     }
     else if (key == 'v')
     {
-        for (auto& g: grabbers) g->getGrabber<ofxPS3EyeGrabber>()->setFlipVertical(true);
-    }
-    else if (key == 'V')
-    {
-        for (auto& g: grabbers) g->getGrabber<ofxPS3EyeGrabber>()->setFlipVertical(false);
+        for (auto& g: grabbers) g->getGrabber<ofxPS3EyeGrabber>()->setFlipVertical(!g->getGrabber<ofxPS3EyeGrabber>()->getFlipVertical());
     }
     else if (key == 't')
     {
-        for (auto& g: grabbers) g->getGrabber<ofxPS3EyeGrabber>()->setTestPattern(true);
-    }
-    else if (key == 'T')
-    {
-        for (auto& g: grabbers) g->getGrabber<ofxPS3EyeGrabber>()->setTestPattern(false);
+        for (auto& g: grabbers) g->getGrabber<ofxPS3EyeGrabber>()->setTestPattern(!g->getGrabber<ofxPS3EyeGrabber>()->getTestPattern());
     }
     else if (key == 'l')
     {
         for (auto& g: grabbers) g->getGrabber<ofxPS3EyeGrabber>()->setLED(true);
     }
-    else if (key == 'L')
+    else if (key == 'k')
     {
         for (auto& g: grabbers) g->getGrabber<ofxPS3EyeGrabber>()->setLED(false);
     }
+    else if (key == 'd')
+    {
+        for (auto& g: grabbers)
+        {
+            ofxPS3EyeGrabber::DemosaicType type =  g->getGrabber<ofxPS3EyeGrabber>()->getDemosaicType();
+            
+            switch (type)
+            {
+                case ofxPS3EyeGrabber::DemosaicType::DEMOSAIC_BILINEAR:
+                    type = ofxPS3EyeGrabber::DemosaicType::DEMOSAIC_VNG;
+                    break;
+                case ofxPS3EyeGrabber::DemosaicType::DEMOSAIC_VNG:
+                    type = ofxPS3EyeGrabber::DemosaicType::DEMOSAIC_EA;
+                    break;
+                case ofxPS3EyeGrabber::DemosaicType::DEMOSAIC_EA:
+                    type = ofxPS3EyeGrabber::DemosaicType::DEMOSAIC_BILINEAR;
+                    break;
+            }
+            
+            g->getGrabber<ofxPS3EyeGrabber>()->setDemosaicType(type);
+            
+        }
+    }
+
 }

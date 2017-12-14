@@ -21,6 +21,16 @@
 class ofxPS3EyeGrabber: public ofBaseVideoGrabber
 {
 public:
+    enum class DemosaicType
+    {
+        /// \brief Default bilinear interpolation.
+        DEMOSAIC_BILINEAR,
+        /// \brief Demosaicing using Variable Number of Gradients.
+        DEMOSAIC_VNG,
+        /// \brief Edge-Aware Demosaicing.
+        DEMOSAIC_EA
+    };
+    
     /// \brief Create an uninitialized ofxPS3EyeGrabber.
     /// \param deviceId The device id.
     ofxPS3EyeGrabber(int deviceId = AUTO_CAMERA_ID);
@@ -145,16 +155,32 @@ public:
     /// \param val a blue balance between 0-255.
     void setGreenBalance(uint8_t val);
 
+    /// \returns true of the image is flipped vertically.
+    bool getFlipVertical() const;
+    
     /// \brief Flip the camera's image.
     /// \param enable true for a vertical flip.
     void setFlipVertical(bool enable);
     OF_DEPRECATED_MSG("Use setFlipVertical() instead", void setVerticalFlip(bool enable));
 
+    /// \returns true of the image is flipped horizontally.
+    bool getFlipHorizontal() const;
+    
     /// \brief Flip the camera's image.
     /// \param enable true for a horizontal flip.
     void setFlipHorizontal(bool enable);
     OF_DEPRECATED_MSG("Use setFlipHorizontal() instead", void setHorizontalFlip(bool enable));
 
+    /// \brief Set the demosaic algorithm.
+    /// \param type The type to set.
+    void setDemosaicType(DemosaicType type);
+    
+    /// \returns the current demosaicing algorithm.
+    DemosaicType getDemosaicType() const;    
+    
+    /// \returns true if the test pattern is enabled.
+    bool getTestPattern() const;
+    
     /// \brief Enable a test pattern overlay.
     /// \param enable true for a test pattern.
     void setTestPattern(bool enable);
@@ -168,7 +194,7 @@ public:
 
     /// \returns the camera's current actual FPS value.
     float getActualFPS() const;
-
+    
     enum
     {
         /// \brief An automatic camera id will connect to the first available camera.
@@ -194,7 +220,10 @@ private:
     /// \brief A shared pointer to the underlying camera device.
     std::shared_ptr<ps3eye::PS3EYECam> _cam;
 
-    /// \brief An internal copy (or pointer) to the camera pixels.
+    /// \brief A copy of the last bayer frame.
+    ofPixels _rawCameraPixels;
+
+    /// \brief A copy of the pixels.
     ofPixels _pixels;
 
     /// \brief The device id.
@@ -206,21 +235,20 @@ private:
     /// \brief True if the frame is new.
     bool _isFrameNew = true;
 
+    /// \brief The format of the pixels delivered by the camera.
+    ofPixelFormat _transferPixelFormat = OF_PIXELS_NATIVE;
+
     /// \brief The desired pixel format.
     ofPixelFormat _pixelFormat = OF_PIXELS_RGB;
 
-    enum
-    {
-        /// \brief The default FPS sample interval in milliseconds.
-        FPS_SAMPLE_INTERVAL = 500
-    };
-
-    void _threadedFunction();
+    DemosaicType _demosaicType = DemosaicType::DEMOSAIC_BILINEAR;
     
+    void _threadedFunction();
+
+    std::atomic<float> _actualFrameRate;
     std::atomic<bool> _isThreadRunning;
     std::thread _thread;
     ofThreadChannel<ofPixels> _pixelChannel;
-    
     
 
 };
