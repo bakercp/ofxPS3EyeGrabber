@@ -157,11 +157,12 @@ void ofApp::keyPressed(int key)
                     type = ofxPS3EyeGrabber::DemosaicType::DEMOSAIC_VNG;
                     break;
                 case ofxPS3EyeGrabber::DemosaicType::DEMOSAIC_VNG:
-                    type = ofxPS3EyeGrabber::DemosaicType::DEMOSAIC_EA;
-                    break;
-                case ofxPS3EyeGrabber::DemosaicType::DEMOSAIC_EA:
+//                    type = ofxPS3EyeGrabber::DemosaicType::DEMOSAIC_EA;
                     type = ofxPS3EyeGrabber::DemosaicType::DEMOSAIC_BILINEAR;
                     break;
+//                case ofxPS3EyeGrabber::DemosaicType::DEMOSAIC_EA:
+//                    type = ofxPS3EyeGrabber::DemosaicType::DEMOSAIC_BILINEAR;
+//                    break;
             }
             
             g->getGrabber<ofxPS3EyeGrabber>()->setDemosaicType(type);
