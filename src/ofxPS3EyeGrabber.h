@@ -27,8 +27,8 @@ public:
         DEMOSAIC_BILINEAR,
         /// \brief Demosaicing using Variable Number of Gradients.
         DEMOSAIC_VNG,
-        /// \brief Edge-Aware Demosaicing.
-        DEMOSAIC_EA
+//        /// \brief Edge-Aware Demosaicing.
+//        DEMOSAIC_EA
     };
     
     /// \brief Create an uninitialized ofxPS3EyeGrabber.

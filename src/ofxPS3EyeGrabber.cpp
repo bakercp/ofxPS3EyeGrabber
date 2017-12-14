@@ -151,7 +151,7 @@ void ofxPS3EyeGrabber::update()
     
     if (_cam && _isFrameNew && _pixelFormat != OF_PIXELS_NATIVE)
     {
-        cv::ColorConversionCodes code;
+        int code = 0;
         
         bool vFlip = _cam->getFlipV();
         
@@ -186,19 +186,19 @@ void ofxPS3EyeGrabber::update()
                         code = vFlip ? cv::COLOR_BayerRG2BGR_VNG: cv::COLOR_BayerGB2BGR_VNG;
                     else ofLogError("ofxPS3EyeGrabber::update") << "Unknown pixel type.";
                     break;
-                case DemosaicType::DEMOSAIC_EA:
-                    if (_pixelFormat == OF_PIXELS_RGB)
-                        code = vFlip ? cv::COLOR_BayerRG2RGB_EA : cv::COLOR_BayerGB2RGB_EA;
-                    else if (_pixelFormat == OF_PIXELS_BGR)
-                        code = vFlip ? cv::COLOR_BayerRG2BGR_EA : cv::COLOR_BayerGB2BGR_EA;
-                    else ofLogError("ofxPS3EyeGrabber::update") << "Unknown pixel type.";
-                    break;
+//                case DemosaicType::DEMOSAIC_EA:
+//                    if (_pixelFormat == OF_PIXELS_RGB)
+//                        code = vFlip ? cv::COLOR_BayerRG2RGB_EA : cv::COLOR_BayerGB2RGB_EA;
+//                    else if (_pixelFormat == OF_PIXELS_BGR)
+//                        code = vFlip ? cv::COLOR_BayerRG2BGR_EA : cv::COLOR_BayerGB2BGR_EA;
+//                    else ofLogError("ofxPS3EyeGrabber::update") << "Unknown pixel type.";
+//                    break;
             }
         }
                 
-        cv::demosaicing(ofxCv::toCv(_rawCameraPixels),
-                        ofxCv::toCv(_pixels),
-                        code);
+        cvtColor(ofxCv::toCv(_rawCameraPixels),
+                 ofxCv::toCv(_pixels),
+                 code);
     }
 }
 
@@ -218,9 +218,7 @@ bool ofxPS3EyeGrabber::isInitialized() const
 ofPixels& ofxPS3EyeGrabber::getPixels()
 {
     if (_pixelFormat == OF_PIXELS_NATIVE)
-    {
         return _rawCameraPixels;
-    }
     
     return _pixels;
 }
@@ -229,9 +227,7 @@ ofPixels& ofxPS3EyeGrabber::getPixels()
 const ofPixels& ofxPS3EyeGrabber::getPixels() const
 {
     if (_pixelFormat == OF_PIXELS_NATIVE)
-    {
         return _rawCameraPixels;
-    }
     
     return _pixels;
 }
@@ -255,7 +251,8 @@ float ofxPS3EyeGrabber::getHeight() const
 
 float ofxPS3EyeGrabber::getWidth() const
 {
-    if (_cam) return _cam->getWidth();
+    if (_cam)
+        return _cam->getWidth();
 
     ofLogWarning("ofxPS3EyeGrabber::getWidth") << "Camera is not initialized.";
     return 0;
@@ -686,8 +683,8 @@ std::shared_ptr<ofVideoGrabber> ofxPS3EyeGrabber::fromJSON(const ofJson& json)
         ++iter;
     }
 
-    if (width == -1) width == ofxPS3EyeGrabber::DEFAULT_WIDTH;
-    if (height == -1) height == ofxPS3EyeGrabber::DEFAULT_HEIGHT;
+    if (width == -1) width = ofxPS3EyeGrabber::DEFAULT_WIDTH;
+    if (height == -1) height = ofxPS3EyeGrabber::DEFAULT_HEIGHT;
 
     if (!grabber->setup(width, height, isUsingTexture))
     {
