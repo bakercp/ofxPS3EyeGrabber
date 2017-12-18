@@ -9,7 +9,7 @@
 
 
 #include "ofJson.h"
-#include "ofBaseTypes.h"
+#include "ofVideoBaseTypes.h"
 #include "ofTypes.h"
 #include "ofEvents.h"
 #include "ofThreadChannel.h"

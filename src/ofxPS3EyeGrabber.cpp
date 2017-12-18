@@ -275,7 +275,7 @@ bool ofxPS3EyeGrabber::setPixelFormat(ofPixelFormat pixelFormat)
     }
 
     
-    ofLogWarning("ofxPS3EyeGrabber::setPixelFormat") << "setPixelFormat(): requested pixel format " << pixelFormat << " not supported";
+    ofLogWarning("ofxPS3EyeGrabber::setPixelFormat") << "setPixelFormat(): requested pixel format " << static_cast<short>(pixelFormat) << " not supported";
     return false;
 }
 
