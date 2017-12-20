@@ -1,4 +1,3 @@
-ofxCv
 ofxKinect
 ofxOpenCv
 ofxPS3EyeGrabber
