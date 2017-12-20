@@ -26,9 +26,7 @@ public:
         /// \brief Default bilinear interpolation.
         DEMOSAIC_BILINEAR,
         /// \brief Demosaicing using Variable Number of Gradients.
-        DEMOSAIC_VNG,
-//        /// \brief Edge-Aware Demosaicing.
-//        DEMOSAIC_EA
+        DEMOSAIC_VNG
     };
     
     /// \brief Create an uninitialized ofxPS3EyeGrabber.
@@ -60,8 +58,8 @@ public:
     /// The grabber can output the following pixel ofPixelFormats:
     ///
     ///     OF_PIXELS_RGB (default)
-    ///     OF_PIXELS_RGBA
-    ///     OF_PIXELS_YUY2
+    ///     OF_PIXELS_BGR
+    ///     OF_PIXELS_GRAY
     ///     OF_PIXELS_NATIVE
     ///
     /// OF_PIXELS_NATIVE defaults to OF_PIXELS_YUY2 and requires no colorspace
