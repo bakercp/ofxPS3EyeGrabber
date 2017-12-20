@@ -72,7 +72,7 @@ void SetThreadName(const char* threadName)
 
 namespace ps3eye {
     
-#define TRANSFER_SIZE        65536
+#define TRANSFER_SIZE        16384
 #define NUM_TRANSFERS        5
     
 #define OV534_REG_ADDRESS    0xf1    /* sensor address */
