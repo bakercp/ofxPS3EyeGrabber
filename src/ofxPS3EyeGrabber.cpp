@@ -6,8 +6,8 @@
 
 
 #include "ofxPS3EyeGrabber.h"
+#include "opencv2/opencv.hpp"
 #include "ofConstants.h"
-#include "ofxCv.h"
 
 
 ofxPS3EyeGrabber::ofxPS3EyeGrabber(int requestedDeviceId):
@@ -195,10 +195,19 @@ void ofxPS3EyeGrabber::update()
 //                    break;
             }
         }
-                
-        cvtColor(ofxCv::toCv(_rawCameraPixels),
-                 ofxCv::toCv(_pixels),
+        
+        cvtColor(cv::Mat(_rawCameraPixels.getHeight(),
+                         _rawCameraPixels.getWidth(),
+                         CV_MAKETYPE(CV_8U, _rawCameraPixels.getNumChannels()),
+                         _rawCameraPixels.getData(),
+                         0),
+                 cv::Mat(_pixels.getHeight(),
+                         _pixels.getWidth(),
+                         CV_MAKETYPE(CV_8U, _pixels.getNumChannels()),
+                         _pixels.getData(),
+                         0),
                  code);
+
     }
 }
 
