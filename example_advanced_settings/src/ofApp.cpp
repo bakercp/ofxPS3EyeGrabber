@@ -11,27 +11,22 @@
 
 void ofApp::setup()
 {
-    ofSetVerticalSync(true);
-
+    // Set the custom ofxPS3EyeGrabber.
     grabber.setGrabber(std::make_shared<ofxPS3EyeGrabber>());
 
     // These are all settings that can be set for any ofVideoGrabber.
     // grabber.setDeviceID(0x00000000);
 
-    // The native pixel format for the ofxPS3EyeGrabber is OF_PIXELS_YUY2
-    // (aka YUV422).  When used this way, no additional pixel copies are made
-    // or colorspace conversions are performed.
-    //
-    // The programmable renderer is able to directly render YUV422 pixels.
-    // so be sure to that the OpenGL version is > 3.2, otherwise you'll
-    // get a blank screen.
+    // The native pixel format for the ofxPS3EyeGrabber is a bayer pattern.
     grabber.setPixelFormat(OF_PIXELS_NATIVE);
-    grabber.setDesiredFrameRate(60);
+    grabber.setDesiredFrameRate(75);
     grabber.setup(640, 480);
 
     // These are examples of ofxPS3EyeGrabber-specific paramaters.
+    // These must be set after the grabber is set up.
     grabber.getGrabber<ofxPS3EyeGrabber>()->setAutogain(true);
     grabber.getGrabber<ofxPS3EyeGrabber>()->setAutoWhiteBalance(true);
+ 
 }
 
 

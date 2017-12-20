@@ -14,9 +14,9 @@
 class ofApp: public ofBaseApp
 {
 public:
-    void setup();
-    void update();
-    void draw();
+    void setup() override;
+    void update() override;
+    void draw() override;
 
     std::shared_ptr<ofVideoGrabber> grabber;
 

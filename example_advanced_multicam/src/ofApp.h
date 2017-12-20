@@ -9,17 +9,16 @@
 
 
 #include "ofMain.h"
-#include "ofxPS3EyeGrabber.h"
 
 
 class ofApp: public ofBaseApp
 {
 public:
-    void setup();
-    void update();
-    void draw();
+    void setup() override;
+    void update() override;
+    void draw() override;
 
-    void keyPressed(int key);
+    void keyPressed(int key) override;
 
     std::vector<std::shared_ptr<ofVideoGrabber>> grabbers;
 
@@ -27,6 +26,6 @@ public:
 
     int camWidth = 640;
     int camHeight = 480;
-    int camFrameRate = 60;
+    int camFrameRate = 30;
 
 };
