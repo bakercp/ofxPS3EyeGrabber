@@ -7,6 +7,11 @@ A Sony PS3 Camera grabber for openFrameworks.
 
 ## Features
 
+[![Build Status](https://travis-ci.org/bakercp/ofxPS3EyeGrabber.svg?branch=master)](https://travis-ci.org/bakercp/ofxPS3EyeGrabber)
+
+[![Build status](https://ci.appveyor.com/api/projects/status/udrkwyv7jngy7m2k/branch/master?svg=true)](https://ci.appveyor.com/project/bakercp/ofxps3eyegrabber/branch/master)
+
+
 
 This class extends `ofBaseVideoGrabber` making it easy to drop in to existing projects.
 
