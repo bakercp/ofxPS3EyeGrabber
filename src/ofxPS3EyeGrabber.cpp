@@ -95,6 +95,13 @@ bool ofxPS3EyeGrabber::setup(int w, int h)
     {
         const auto& eyeDevices = ps3eye::PS3EYECam::getDevices();
 
+        if (eyeDevices.empty())
+        {
+            ofLogWarning("ofxPS3EyeGrabber::setup") << "There are no cameras detected. (Re)connect devices and check device permissions";
+            return false;
+        }
+
+
         for (const auto& device : eyeDevices)
         {
             if (_requestedDeviceId == AUTO_CAMERA_ID || _requestedDeviceId == _getLocationIdForDevice(device->device_))
