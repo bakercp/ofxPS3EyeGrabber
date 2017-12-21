@@ -30,8 +30,8 @@ public:
     };
     
     /// \brief Create an uninitialized ofxPS3EyeGrabber.
-    /// \param deviceId The device id.
-    ofxPS3EyeGrabber(int deviceId = AUTO_CAMERA_ID);
+    /// \param requestedDeviceId The requested device id.
+    ofxPS3EyeGrabber(std::size_t requestedDeviceId = AUTO_CAMERA_ID);
 
     /// \brief Destroy the PS3EyeGrabber.
     virtual ~ofxPS3EyeGrabber();
@@ -74,7 +74,7 @@ public:
     void setDesiredFrameRate(int framerate) override;
     void videoSettings() override;
 
-    int getDeviceId() const;
+    std::size_t getDeviceId() const;
 
     /// \returns true iff auto gain is enabled.
     bool getAutogain() const;
@@ -193,10 +193,10 @@ public:
     /// \returns the camera's current actual FPS value.
     float getActualFPS() const;
     
-    enum
+    enum : std::size_t
     {
         /// \brief An automatic camera id will connect to the first available camera.
-        AUTO_CAMERA_ID = -1,
+        AUTO_CAMERA_ID = std::numeric_limits<std::size_t>::max(),
 
         /// \brief The default camera width.
         DEFAULT_WIDTH = 640,
@@ -211,7 +211,7 @@ public:
     static std::shared_ptr<ofVideoGrabber> fromJSON(const ofJson& json);
 
 private:
-    static int _getLocationIdForDevice(libusb_device* device);
+    static std::size_t _getLocationIdForDevice(libusb_device* device);
     
     ofEventListener _exitListener;
 
@@ -247,7 +247,6 @@ private:
     std::atomic<bool> _isThreadRunning;
     std::thread _thread;
     ofThreadChannel<ofPixels> _pixelChannel;
-    
 
 };
 

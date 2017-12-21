@@ -10,11 +10,11 @@
 #include "ofConstants.h"
 
 
-ofxPS3EyeGrabber::ofxPS3EyeGrabber(int requestedDeviceId):
+ofxPS3EyeGrabber::ofxPS3EyeGrabber(std::size_t requestedDeviceId):
     _exitListener(ofEvents().exit.newListener(this, &ofxPS3EyeGrabber::exit)),
     _requestedDeviceId(requestedDeviceId),
-    _isThreadRunning(false),
-    _actualFrameRate(0)
+    _actualFrameRate(0),
+    _isThreadRunning(false)
 {
 }
 
@@ -26,7 +26,7 @@ ofxPS3EyeGrabber::~ofxPS3EyeGrabber()
 }
 
 
-void ofxPS3EyeGrabber::exit(ofEventArgs& args)
+void ofxPS3EyeGrabber::exit(ofEventArgs&)
 {
     stop();
 }
@@ -60,11 +60,11 @@ void ofxPS3EyeGrabber::stop()
 }
 
 
-int ofxPS3EyeGrabber::getDeviceId() const
+std::size_t ofxPS3EyeGrabber::getDeviceId() const
 {
     if (_cam) return _getLocationIdForDevice(_cam->device_);
 
-    ofLogWarning("ofxPS3EyeGrabber::getDeviceId") << "Camera is not initialized, requested id is " << _requestedDeviceId;
+    ofLogWarning("ofxPS3EyeGrabber::getDeviceId") << "Camera is not initialized, requested id is " << _requestedDeviceId << ".";
     return _requestedDeviceId;
 }
 
@@ -76,7 +76,7 @@ std::vector<ofVideoDevice> ofxPS3EyeGrabber::listDevices() const
     for (const auto& camera: ps3eye::PS3EYECam::getDevices())
     {
         ofVideoDevice device;
-        device.id = _getLocationIdForDevice(camera->device_); // This is the USB Location ID.
+        device.id = static_cast<int>(_getLocationIdForDevice(camera->device_)); // This is the USB Location ID.
         device.deviceName = "PS3-Eye";
         device.hardwareName = "N/A"; // This is not provided by the PS3 Eye camera.
         device.serialID = "N/A";     // This is not provided by the PS3 Eye camera.
@@ -107,9 +107,9 @@ bool ofxPS3EyeGrabber::setup(int w, int h)
             {
                 _cam = device;
                 
-                bool success = _cam->init(w,
-                                          h,
-                                          _requestedFrameRate,
+                bool success = _cam->init(static_cast<uint32_t>(w),
+                                          static_cast<uint32_t>(h),
+                                          static_cast<uint16_t>(_requestedFrameRate),
                                           ps3eye::PS3EYECam::EOutputFormat::Bayer);
                 
                 if (success)
@@ -195,14 +195,14 @@ void ofxPS3EyeGrabber::update()
             }
         }
         
-        cvtColor(cv::Mat(_rawCameraPixels.getHeight(),
-                         _rawCameraPixels.getWidth(),
-                         CV_MAKETYPE(CV_8U, _rawCameraPixels.getNumChannels()),
+        cvtColor(cv::Mat(static_cast<int>(_rawCameraPixels.getHeight()),
+                         static_cast<int>(_rawCameraPixels.getWidth()),
+                         static_cast<int>(CV_MAKETYPE(CV_8U, _rawCameraPixels.getNumChannels())),
                          _rawCameraPixels.getData(),
                          0),
-                 cv::Mat(_pixels.getHeight(),
-                         _pixels.getWidth(),
-                         CV_MAKETYPE(CV_8U, _pixels.getNumChannels()),
+                 cv::Mat(static_cast<int>(_pixels.getHeight()),
+                         static_cast<int>(_pixels.getWidth()),
+                         static_cast<int>(CV_MAKETYPE(CV_8U, _pixels.getNumChannels())),
                          _pixels.getData(),
                          0),
                  code);
@@ -292,7 +292,7 @@ ofPixelFormat ofxPS3EyeGrabber::getPixelFormat() const
 }
 
 
-void ofxPS3EyeGrabber::setVerbose(bool verbose)
+void ofxPS3EyeGrabber::setVerbose(bool)
 {
     ofLogWarning("ofxPS3EyeGrabber::setVerbose") << "Not implemented.";
 }
@@ -303,7 +303,7 @@ void ofxPS3EyeGrabber::setDeviceID(int deviceId)
     if (_cam)
         ofLogWarning("ofxPS3EyeGrabber::setDeviceID") << "Camera already initialized. Change will take place when camera is reinitialized.";
 
-    _requestedDeviceId = deviceId;
+    _requestedDeviceId = static_cast<std::size_t>(deviceId);
 }
 
 
@@ -660,7 +660,7 @@ std::shared_ptr<ofVideoGrabber> ofxPS3EyeGrabber::fromJSON(const ofJson& json)
         {
             const auto& str = value.get<std::string>();
 
-            if (str == "auto") grabber->setDeviceID(ofxPS3EyeGrabber::AUTO_CAMERA_ID);
+            if (str == "auto") grabber->setDeviceID(static_cast<int>(ofxPS3EyeGrabber::AUTO_CAMERA_ID));
             else if (str.substr(0, 2).compare("0x") == 0) grabber->setDeviceID(ofHexToInt(str));
             else grabber->setDeviceID(ofToInt(str));
         }
@@ -782,7 +782,7 @@ void ofxPS3EyeGrabber::_threadedFunction()
 
 
 
-int ofxPS3EyeGrabber::_getLocationIdForDevice(libusb_device* device)
+std::size_t ofxPS3EyeGrabber::_getLocationIdForDevice(libusb_device* device)
 {
     // As per the USB 3.0 specs, the current maximum limit for the depth is 7.
     uint8_t portNumbers[8];
@@ -800,13 +800,13 @@ int ofxPS3EyeGrabber::_getLocationIdForDevice(libusb_device* device)
             _id |= (portNumbers[i] << (20 - 4 * i));
         }
         
-        return _id;
+        return static_cast<std::size_t>(_id);
     }
     
     const char* pErrorString = libusb_error_name(numPorts);
     std::cerr << (pErrorString ? std::string(pErrorString) : "Error getting location id for device.") << std::endl;
     
-    return -1;
+    return AUTO_CAMERA_ID;
 }
 
 
