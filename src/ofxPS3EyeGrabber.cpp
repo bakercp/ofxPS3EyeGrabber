@@ -97,10 +97,9 @@ bool ofxPS3EyeGrabber::setup(int w, int h)
 
         if (eyeDevices.empty())
         {
-            ofLogWarning("ofxPS3EyeGrabber::setup") << "There are no cameras detected. (Re)connect devices and check device permissions";
+            ofLogWarning("ofxPS3EyeGrabber::setup") << "There are no cameras detected. (Re)connect devices and check device permissions.";
             return false;
         }
-
 
         for (const auto& device : eyeDevices)
         {
