@@ -253,7 +253,6 @@ float ofxPS3EyeGrabber::getHeight() const
     if (_cam)
         return _cam->getHeight();
 
-    ofLogWarning("ofxPS3EyeGrabber::getHeight") << "Camera is not initialized.";
     return 0;
 }
 
@@ -263,7 +262,6 @@ float ofxPS3EyeGrabber::getWidth() const
     if (_cam)
         return _cam->getWidth();
 
-    ofLogWarning("ofxPS3EyeGrabber::getWidth") << "Camera is not initialized.";
     return 0;
 }
 
