@@ -186,12 +186,14 @@ void ofxPS3EyeGrabber::update()
                     break;
                 }
                 case DemosaicType::DEMOSAIC_VNG:
+                {
                     if (_pixelFormat == OF_PIXELS_RGB)
                         code = vFlip ? cv::COLOR_BayerRG2RGB_VNG : cv::COLOR_BayerGB2RGB_VNG;
                     else if (_pixelFormat == OF_PIXELS_BGR)
                         code = vFlip ? cv::COLOR_BayerRG2BGR_VNG: cv::COLOR_BayerGB2BGR_VNG;
                     else ofLogError("ofxPS3EyeGrabber::update") << "Unknown pixel type.";
                     break;
+                }
             }
         }
         
