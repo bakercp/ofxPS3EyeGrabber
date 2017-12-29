@@ -11,7 +11,8 @@
 
 
 ofxPS3EyeGrabber::ofxPS3EyeGrabber(std::size_t requestedDeviceId):
-    _exitListener(ofEvents().exit.newListener(this, &ofxPS3EyeGrabber::exit)),
+    _exitListener(ofEvents().exit.newListener(this, &ofxPS3EyeGrabber::_exit)),
+    _updateListener(ofEvents().update.newListener(this, &ofxPS3EyeGrabber::_update, OF_EVENT_ORDER_AFTER_APP)),
     _requestedDeviceId(requestedDeviceId),
     _actualFrameRate(0),
     _isThreadRunning(false)
@@ -21,30 +22,23 @@ ofxPS3EyeGrabber::ofxPS3EyeGrabber(std::size_t requestedDeviceId):
 
 ofxPS3EyeGrabber::~ofxPS3EyeGrabber()
 {
-    stop();
+    _stop();
     _cam.reset();
 }
 
 
-void ofxPS3EyeGrabber::exit(ofEventArgs&)
+void ofxPS3EyeGrabber::_start()
 {
-    stop();
+    if (_cam) _cam->start();
 }
 
 
-void ofxPS3EyeGrabber::start()
-{
-    if (_cam)
-        _cam->start();
-}
-
-
-void ofxPS3EyeGrabber::stop()
+void ofxPS3EyeGrabber::_stop()
 {
     if (_isThreadRunning)
     {
         _isThreadRunning = false;
-        
+
         try
         {
             _thread.join();
@@ -53,10 +47,25 @@ void ofxPS3EyeGrabber::stop()
         {
             ofLogWarning("ofxPS3EyeGrabber::stop") << "Thread join failed: " << exc.what();
         }
-        
-        _cam->stop();
 
+        _cam->stop();
     }
+}
+
+
+void ofxPS3EyeGrabber::_exit(ofEventArgs&)
+{
+    _stop();
+}
+
+
+void ofxPS3EyeGrabber::_update(ofEventArgs&)
+{
+    // Here we automatically service the frame queue. Any frames that weren't
+    // copied during the last call to update() from the client, will be cleared.
+    // We then call update to make sure the thread channel is serviced.
+    _frames.clear();
+    update();
 }
 
 
@@ -89,6 +98,7 @@ std::vector<ofVideoDevice> ofxPS3EyeGrabber::listDevices() const
     return devices;
 }
 
+
 bool ofxPS3EyeGrabber::setup(int w, int h)
 {
     if (_cam == nullptr)
@@ -113,26 +123,15 @@ bool ofxPS3EyeGrabber::setup(int w, int h)
                                           ps3eye::PS3EYECam::EOutputFormat::Bayer);
                 
                 if (success)
-                {
-                    _rawCameraPixels.allocate(_cam->getWidth(),
-                                              _cam->getHeight(),
-                                              OF_PIXELS_GRAY);
-                    
-                    _pixels.allocate(_cam->getWidth(),
-                                     _cam->getHeight(),
-                                     _pixelFormat);
-                    
-                    start();
+                {                    
+                    _start();
 
                     _isThreadRunning = true;
                     _thread = std::thread(&ofxPS3EyeGrabber::_threadedFunction, this);
                     
                     return true;
                 }
-                else
-                {
-                    return false;
-                }
+                else return false;
             }
         }
 
@@ -145,77 +144,29 @@ bool ofxPS3EyeGrabber::setup(int w, int h)
 }
 
 
+std::vector<ofxPS3EyeGrabber::Frame> ofxPS3EyeGrabber::getAllFrames() const
+{
+    return _frames;
+}
+
+
 void ofxPS3EyeGrabber::update()
 {
-    _isFrameNew = false;
-
-    while (!_pixelChannel.empty())
+    while (!_frameChannel.empty())
     {
-        _isFrameNew = true;
-        _pixelChannel.receive(_rawCameraPixels);
+        Frame frame;
+        _frameChannel.receive(frame);
+        _frames.push_back(std::move(frame));
     }
     
-    if (_cam && _isFrameNew && _pixelFormat != OF_PIXELS_NATIVE)
-    {
-        int code = 0;
-        
-        bool vFlip = _cam->getFlipV();
-        
-        if (_pixelFormat == OF_PIXELS_GRAY)
-        {
-            code = vFlip ? cv::COLOR_BayerRG2GRAY : cv::COLOR_BayerGB2GRAY;
-        }
-        else
-        {
-            
-            // Normal pattern from PS3Eye
-            // G R G R G R
-            // B G B G B G
-            // G R G R G R
-            // B G B G B G
-
-            switch (_demosaicType)
-            {
-                case DemosaicType::DEMOSAIC_BILINEAR:
-                {
-                    if (_pixelFormat == OF_PIXELS_RGB)
-                        code = vFlip ? cv::COLOR_BayerRG2RGB : cv::COLOR_BayerGB2RGB;
-                    else if (_pixelFormat == OF_PIXELS_BGR)
-                        code = vFlip ? cv::COLOR_BayerRG2BGR : cv::COLOR_BayerGB2BGR;
-                    else ofLogError("ofxPS3EyeGrabber::update") << "Unknown pixel type.";
-                    break;
-                }
-                case DemosaicType::DEMOSAIC_VNG:
-                {
-                    if (_pixelFormat == OF_PIXELS_RGB)
-                        code = vFlip ? cv::COLOR_BayerRG2RGB_VNG : cv::COLOR_BayerGB2RGB_VNG;
-                    else if (_pixelFormat == OF_PIXELS_BGR)
-                        code = vFlip ? cv::COLOR_BayerRG2BGR_VNG: cv::COLOR_BayerGB2BGR_VNG;
-                    else ofLogError("ofxPS3EyeGrabber::update") << "Unknown pixel type.";
-                    break;
-                }
-            }
-        }
-        
-        cvtColor(cv::Mat(static_cast<int>(_rawCameraPixels.getHeight()),
-                         static_cast<int>(_rawCameraPixels.getWidth()),
-                         static_cast<int>(CV_MAKETYPE(CV_8U, _rawCameraPixels.getNumChannels())),
-                         _rawCameraPixels.getData(),
-                         0),
-                 cv::Mat(static_cast<int>(_pixels.getHeight()),
-                         static_cast<int>(_pixels.getWidth()),
-                         static_cast<int>(CV_MAKETYPE(CV_8U, _pixels.getNumChannels())),
-                         _pixels.getData(),
-                         0),
-                 code);
-
-    }
+    if (!_frames.empty())
+        _pixels = _frames.back().pixels;
 }
 
 
 bool ofxPS3EyeGrabber::isFrameNew() const
 {
-    return _isFrameNew;
+    return !_frames.empty();
 }
 
 
@@ -227,25 +178,19 @@ bool ofxPS3EyeGrabber::isInitialized() const
 
 ofPixels& ofxPS3EyeGrabber::getPixels()
 {
-    if (_pixelFormat == OF_PIXELS_NATIVE)
-        return _rawCameraPixels;
-    
     return _pixels;
 }
 
 
 const ofPixels& ofxPS3EyeGrabber::getPixels() const
 {
-    if (_pixelFormat == OF_PIXELS_NATIVE)
-        return _rawCameraPixels;
-    
     return _pixels;
 }
 
 
 void ofxPS3EyeGrabber::close()
 {
-    stop();
+    _stop();
 }
 
 
@@ -282,7 +227,6 @@ bool ofxPS3EyeGrabber::setPixelFormat(ofPixelFormat pixelFormat)
         return true;
     }
 
-    
     ofLogWarning("ofxPS3EyeGrabber::setPixelFormat") << "setPixelFormat(): requested pixel format " << static_cast<short>(pixelFormat) << " not supported";
     return false;
 }
@@ -747,41 +691,42 @@ std::shared_ptr<ofVideoGrabber> ofxPS3EyeGrabber::fromJSON(const ofJson& json)
 
 void ofxPS3EyeGrabber::_threadedFunction()
 {
+    ofPixelFormat transferPixelFormat = _transferPixelFormat();
+    ofPixelFormat pixelFormat = getPixelFormat();
+    DemosaicType demosaicType = getDemosaicType();
+    
+    
     ofPixels pixels;
     pixels.allocate(_cam->getWidth(),
                     _cam->getHeight(),
-                    _rawCameraPixels.getPixelFormat());
+                    transferPixelFormat);
 
     const float frameRate = _cam->getFrameRate();
-
-    uint64_t lastUpdateTimeMicros = 0;
     _actualFrameRate = frameRate;
-    float frameCount = frameRate;
+
+    uint64_t lastUpdateTimeMillis = ofGetElapsedTimeMillis();
+    uint64_t nowMillis = lastUpdateTimeMillis;
+    uint64_t deltaTimeMillis = nowMillis - lastUpdateTimeMillis;
     
     while (_isThreadRunning)
     {
-        _cam->getFrame(pixels.getData());
+        bool vFlip = _cam->getFlipV(); // thread safe?
+        _cam->getFrame(pixels.getData()); // thread safe?
+        nowMillis = ofGetElapsedTimeMillis();
+        _actualFrameRate = 0.99f * _actualFrameRate + 0.01f * 1000.0f / (nowMillis - lastUpdateTimeMillis);
+        lastUpdateTimeMillis = nowMillis;
         
-        frameCount--;
+        Frame frame;
+        frame.timestamp = nowMillis;
         
-        if (frameCount <= 0)
-        {
-            uint64_t now = ofGetElapsedTimeMicros();
-            
-            if (lastUpdateTimeMicros != 0)
-            {
-                _actualFrameRate = frameRate * (1000000.0f / (now - lastUpdateTimeMicros));
-            }
-            
-            lastUpdateTimeMicros = now;
-            frameCount = frameRate;
-        }
-        
-        _pixelChannel.send(pixels);
-        
+        if (transferPixelFormat != OF_PIXELS_NATIVE)
+            frame.pixels = bayerConverter(pixels, pixelFormat, vFlip, demosaicType);
+        else
+            frame.pixels = pixels;
+
+        _frameChannel.send(std::move(frame));
     }
 }
-
 
 
 std::size_t ofxPS3EyeGrabber::_getLocationIdForDevice(libusb_device* device)
@@ -812,4 +757,72 @@ std::size_t ofxPS3EyeGrabber::_getLocationIdForDevice(libusb_device* device)
 }
 
 
+ofPixelFormat ofxPS3EyeGrabber::_transferPixelFormat() const
+{
+    // This always returns OF_PIXELS_GRAY while we transfer a Bayer pattern.
+    return OF_PIXELS_GRAY;
+}
 
+
+ofPixels ofxPS3EyeGrabber::bayerConverter(ofPixels& bayerPixels,
+                                          ofPixelFormat targetFormat,
+                                          bool vFlip,
+                                          DemosaicType _demosaicType)
+{
+    if (targetFormat == OF_PIXELS_NATIVE)
+        return bayerPixels;
+
+    int code = 0;
+
+    if (targetFormat == OF_PIXELS_GRAY)
+    {
+        code = vFlip ? cv::COLOR_BayerRG2GRAY : cv::COLOR_BayerGB2GRAY;
+    }
+    else
+    {
+        // Normal pattern from PS3Eye
+        // G R G R G R
+        // B G B G B G
+        // G R G R G R
+        // B G B G B G
+
+        switch (_demosaicType)
+        {
+            case DemosaicType::DEMOSAIC_BILINEAR:
+            {
+                if (targetFormat == OF_PIXELS_RGB)
+                    code = vFlip ? cv::COLOR_BayerRG2RGB : cv::COLOR_BayerGB2RGB;
+                else if (targetFormat == OF_PIXELS_BGR)
+                    code = vFlip ? cv::COLOR_BayerRG2BGR : cv::COLOR_BayerGB2BGR;
+                else ofLogError("ofxPS3EyeGrabber::bayerConverter") << "Unknown pixel type.";
+                break;
+            }
+            case DemosaicType::DEMOSAIC_VNG:
+            {
+                if (targetFormat == OF_PIXELS_RGB)
+                    code = vFlip ? cv::COLOR_BayerRG2RGB_VNG : cv::COLOR_BayerGB2RGB_VNG;
+                else if (targetFormat == OF_PIXELS_BGR)
+                    code = vFlip ? cv::COLOR_BayerRG2BGR_VNG: cv::COLOR_BayerGB2BGR_VNG;
+                else ofLogError("ofxPS3EyeGrabber::update") << "Unknown pixel type.";
+                break;
+            }
+        }
+    }
+
+    ofPixels pixels;
+    pixels.allocate(bayerPixels.getWidth(), bayerPixels.getHeight(), targetFormat);
+    
+    cvtColor(cv::Mat(static_cast<int>(bayerPixels.getHeight()),
+                     static_cast<int>(bayerPixels.getWidth()),
+                     static_cast<int>(CV_MAKETYPE(CV_8U, bayerPixels.getNumChannels())),
+                     bayerPixels.getData(),
+                     0),
+             cv::Mat(static_cast<int>(pixels.getHeight()),
+                     static_cast<int>(pixels.getWidth()),
+                     static_cast<int>(CV_MAKETYPE(CV_8U, pixels.getNumChannels())),
+                     pixels.getData(),
+                     0),
+             code);
+
+    return pixels;
+}

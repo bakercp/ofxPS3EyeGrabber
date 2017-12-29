@@ -8,6 +8,7 @@
 #pragma once
 
 
+#include <vector>
 #include "ofJson.h"
 #include "ofVideoBaseTypes.h"
 #include "ofTypes.h"
@@ -21,6 +22,15 @@
 class ofxPS3EyeGrabber: public ofBaseVideoGrabber
 {
 public:
+    /// \brief A class for a frame which includes the pixels and a timestamp in microseconds.
+    struct Frame
+    {
+        ofPixels pixels;
+        uint64_t timestamp = 0;
+    };
+    
+
+    /// \brief A type describing the demosaicing algorithm used with native capture pixels.
     enum class DemosaicType
     {
         /// \brief Default bilinear interpolation.
@@ -33,14 +43,8 @@ public:
     /// \param requestedDeviceId The requested device id.
     ofxPS3EyeGrabber(std::size_t requestedDeviceId = AUTO_CAMERA_ID);
 
-    /// \brief Destroy the PS3EyeGrabber.
+    /// \brief Destroy the ofxPS3EyeGrabber.
     virtual ~ofxPS3EyeGrabber();
-
-    /// \brief Callback for an exit event.
-    /// \param args the event callback parameter.
-    void exit(ofEventArgs& args);
-    void start();
-    void stop();
 
     std::vector<ofVideoDevice> listDevices() const override;
     bool setup(int w, int h) override;
@@ -62,8 +66,12 @@ public:
     ///     OF_PIXELS_GRAY
     ///     OF_PIXELS_NATIVE
     ///
-    /// OF_PIXELS_NATIVE defaults to OF_PIXELS_YUY2 and requires no colorspace
-    /// conversion of pixels copying.
+    /// OF_PIXELS_RGB, OF_PIXELS_BGR, OF_PIXELS_RGB and OF_PIXELS_GRAY will
+    /// transfer pixels from the camera as an 8-bit / pixel Bayer pattern and
+    /// will be converted to the requested color pixel type.
+    ///
+    /// OF_PIXELS_NATIVE defaults to OF_PIXELS_GRAY and the results are an
+    /// unconverted 8-bit per pixel Bayer pattern.
     ///
     /// \param pixelFormat the requested ofPixelFormat.
     /// \returns true if the format was successfully changed.
@@ -73,6 +81,9 @@ public:
     void setDeviceID(int deviceId) override;
     void setDesiredFrameRate(int framerate) override;
     void videoSettings() override;
+
+    /// \returns all new frames.
+    std::vector<Frame> getAllFrames() const;
 
     std::size_t getDeviceId() const;
 
@@ -202,9 +213,17 @@ public:
         DEFAULT_WIDTH = 640,
 
         /// \brief The default camera height.
-        DEFAULT_HEIGHT = 480
+        DEFAULT_HEIGHT = 480,
+        
+        /// \brief The default FPS update interval in microseconds.
+        DEFAULT_ACTUAL_FPS_UPDATE_INTERVAL_MICROS = 500000,
     };
 
+    static ofPixels bayerConverter(ofPixels& bayerPixels,
+                                   ofPixelFormat targetFormat,
+                                   bool vFlip,
+                                   DemosaicType _demosaicType);
+    
     /// \brief Setup a ofxPS3EyeGrabber based ofVideoGrabber from JSON.
     ///
     /// \returns the configured and set up camera.
@@ -213,16 +232,21 @@ public:
 private:
     static std::size_t _getLocationIdForDevice(libusb_device* device);
     
+    ofPixelFormat _transferPixelFormat() const;
+    
     ofEventListener _exitListener;
+    ofEventListener _updateListener;
+
+    void _start();
+    void _stop();
+
+    /// \brief Callback for an exit event.
+    /// \param args the event callback parameter.
+    void _exit(ofEventArgs& args);
+    void _update(ofEventArgs& args);
 
     /// \brief A shared pointer to the underlying camera device.
     std::shared_ptr<ps3eye::PS3EYECam> _cam;
-
-    /// \brief A copy of the last bayer frame.
-    ofPixels _rawCameraPixels;
-
-    /// \brief A copy of the pixels.
-    ofPixels _pixels;
 
     /// \brief The device id.
     std::size_t _requestedDeviceId = AUTO_CAMERA_ID;
@@ -230,11 +254,11 @@ private:
     /// \brief The requested framerate.
     int _requestedFrameRate = 60;
 
-    /// \brief True if the frame is new.
-    bool _isFrameNew = true;
+    /// \brief A collection of the latest frames.
+    std::vector<Frame> _frames;
 
-    /// \brief The format of the pixels delivered by the camera.
-    ofPixelFormat _transferPixelFormat = OF_PIXELS_NATIVE;
+    /// \brief The current display pixels.
+    ofPixels _pixels;
 
     /// \brief The desired pixel format.
     ofPixelFormat _pixelFormat = OF_PIXELS_RGB;
@@ -246,7 +270,6 @@ private:
     std::atomic<float> _actualFrameRate;
     std::atomic<bool> _isThreadRunning;
     std::thread _thread;
-    ofThreadChannel<ofPixels> _pixelChannel;
+    ofThreadChannel<Frame> _frameChannel;
 
 };
-
