@@ -49,7 +49,19 @@ matrix:
 
 # OSX, OF master
   - os: osx
-    osx_image: xcode8
+    osx_image: xcode9.2
+    compiler: clang
+    env: TARGET="osx" OF_BRANCH="master"
+  - os: osx
+    osx_image: xcode9.1
+    compiler: clang
+    env: TARGET="osx" OF_BRANCH="master"
+  - os: osx
+    osx_image: xcode9.0
+    compiler: clang
+    env: TARGET="osx" OF_BRANCH="master"
+  - os: osx
+    osx_image: xcode8.3
     compiler: clang
     env: TARGET="osx" OF_BRANCH="master"
 
