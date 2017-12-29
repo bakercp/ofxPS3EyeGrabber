@@ -214,9 +214,6 @@ public:
 
         /// \brief The default camera height.
         DEFAULT_HEIGHT = 480,
-        
-        /// \brief The default FPS update interval in microseconds.
-        DEFAULT_ACTUAL_FPS_UPDATE_INTERVAL_MICROS = 500000,
     };
 
     static ofPixels bayerConverter(ofPixels& bayerPixels,

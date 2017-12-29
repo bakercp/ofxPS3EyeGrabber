@@ -706,7 +706,6 @@ void ofxPS3EyeGrabber::_threadedFunction()
 
     uint64_t lastUpdateTimeMillis = ofGetElapsedTimeMillis();
     uint64_t nowMillis = lastUpdateTimeMillis;
-    uint64_t deltaTimeMillis = nowMillis - lastUpdateTimeMillis;
     
     while (_isThreadRunning)
     {

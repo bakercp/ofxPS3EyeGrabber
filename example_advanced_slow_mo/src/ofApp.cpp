@@ -12,7 +12,7 @@
 void ofApp::setup()
 {
     grabber.setGrabber(std::make_shared<ofxPS3EyeGrabber>());
-    grabber.setDesiredFrameRate(300);
+    grabber.setDesiredFrameRate(187);
     grabber.setup(320, 240);
 
     // These are examples of ofxPS3EyeGrabber-specific paramaters.
