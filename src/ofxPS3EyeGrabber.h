@@ -10,7 +10,6 @@
 
 #include <vector>
 #include "ofJson.h"
-#include "ofVideoBaseTypes.h"
 #include "ofTypes.h"
 #include "ofEvents.h"
 #include "ofThreadChannel.h"
