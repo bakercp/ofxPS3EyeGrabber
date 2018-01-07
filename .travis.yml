@@ -48,22 +48,22 @@ matrix:
 #          - gdb
 
 # OSX, OF master
-  - os: osx
-    osx_image: xcode9.2
-    compiler: clang
-    env: TARGET="osx" OF_BRANCH="master"
-  - os: osx
-    osx_image: xcode9.1
-    compiler: clang
-    env: TARGET="osx" OF_BRANCH="master"
+  # - os: osx
+  #   osx_image: xcode9.2
+  #   compiler: clang
+  #   env: TARGET="osx" OF_BRANCH="master"
+  # - os: osx
+  #   osx_image: xcode9.1
+  #   compiler: clang
+  #   env: TARGET="osx" OF_BRANCH="master"
   - os: osx
     osx_image: xcode9.0
     compiler: clang
     env: TARGET="osx" OF_BRANCH="master"
-  - os: osx
-    osx_image: xcode8.3
-    compiler: clang
-    env: TARGET="osx" OF_BRANCH="master"
+  # - os: osx
+  #   osx_image: xcode8.3
+  #   compiler: clang
+  #   env: TARGET="osx" OF_BRANCH="master"
 
 # OSX, OF stable:  Not supported yet
 #  - os: osx
@@ -203,6 +203,8 @@ install:
   - git clone --depth=1 --branch=$OF_BRANCH https://github.com/openframeworks/openFrameworks
   - cd openFrameworks
   - scripts/ci/addons/install.sh
+  # Force OSX to recompile library, since download is out of date.
+  - if [ "$TARGET" == "osx" ]; then rm libs/openFrameworksCompiled/lib/osx/libopenFrameworksDebug.a; fi
 
 script:
   - scripts/ci/addons/build.sh
