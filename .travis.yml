@@ -1,6 +1,6 @@
 language: c++
 compiler: gcc
-sudo: required
+sudo: true
 matrix:
   include:
   # fully specify builds, include can't dynamically expand matrix entries
@@ -22,38 +22,21 @@ matrix:
 
 # OSX, OF master
   - os: osx
-    osx_image: xcode9
+    osx_image: xcode8
     compiler: clang
     env: TARGET="osx" OF_BRANCH="master"
-
-# Linux ARM6, OF master: Uncomment following lines to enable
-  - os: linux
-    sudo: required
-    dist: trusty
-    env: TARGET="linuxarmv6l" OF_BRANCH="master"
-
-
-# Linux ARM7, OF master: Uncomment following lines to enable
-  - os: linux
-    sudo: required
-    env: TARGET="linuxarmv7l" OF_BRANCH="master"
-    cache:
-      directories:
-        - ~/rpi2_toolchain
-        - ~/firmware-master
-        - ~/archlinux
 
   # Exclude the default build that would otherwise be generated
   # see https://github.com/travis-ci/travis-ci/issues/1228
   exclude:
     - compiler: gcc
-
 before_install:
-  - echo "https://raw.githubusercontent.com/bakercp/ofxAddonScripts/${OF_BRANCH}/scripts/ci/tools/install.sh"
-  - source <(curl -SLs https://raw.githubusercontent.com/bakercp/ofxAddonScripts/${OF_BRANCH}/scripts/ci/tools/install.sh)
+  - curl -SLsO https://raw.githubusercontent.com/bakercp/ofxAddonScripts/${OF_BRANCH}/scripts/ci/tools/install.sh
+  - source install.sh
 install:
   - do_install
 script:
   - do_script
+
 git:
   depth: 10
