@@ -17,7 +17,8 @@ void ofApp::setup()
     // These are all settings that can be set for any ofVideoGrabber.
     // grabber.setDeviceID(0x00000000);
 
-    // The native pixel format for the ofxPS3EyeGrabber is a bayer pattern.
+    // The native pixel format for the ofxPS3EyeGrabber is a Bayer pattern
+    // (it will look black and white).
     grabber.setPixelFormat(OF_PIXELS_NATIVE);
     grabber.setDesiredFrameRate(75);
     grabber.setup(640, 480);

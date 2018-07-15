@@ -12,13 +12,15 @@
 void ofApp::setup()
 {
     grabber.setGrabber(std::make_shared<ofxPS3EyeGrabber>());
-    grabber.setDesiredFrameRate(187);
+    grabber.setDesiredFrameRate(180);
     grabber.setup(320, 240);
 
+    ofSetWindowShape(grabber.getWidth() * 2, grabber.getHeight());
+    
     // These are examples of ofxPS3EyeGrabber-specific paramaters.
     // These must be set after the grabber is set up.
-    grabber.getGrabber<ofxPS3EyeGrabber>()->setAutogain(true);
-    grabber.getGrabber<ofxPS3EyeGrabber>()->setAutoWhiteBalance(true);
+     grabber.getGrabber<ofxPS3EyeGrabber>()->setAutogain(true);
+     grabber.getGrabber<ofxPS3EyeGrabber>()->setAutoWhiteBalance(true);
 }
 
 
@@ -48,24 +50,31 @@ void ofApp::draw()
     ofBackground(0);
     ofSetColor(255);
 
+    // Draw the raw camera feed on the left.
     grabber.draw(0, 0);
 
+    
+    // Draw the slow-mo feed on the left.
+    ofPushMatrix();
+    ofTranslate(grabber.getWidth(), 0);
     if (!isRecording)
     {
         if (!frameBuffer.empty())
         {
             currentFrame = (currentFrame + 1) % frameBuffer.size();
-            frameBuffer[currentFrame].draw(grabber.getWidth(), 0);
-            ofDrawBitmapString(ofToString(currentFrame) + "/" + ofToString(frameBuffer.size()), 14, grabber.getHeight() - 28);
+            frameBuffer[currentFrame].draw(0, 0);
+            ofDrawBitmapString("Current Frame: " + ofToString(currentFrame) + "/" + ofToString(frameBuffer.size()), 14, grabber.getHeight() - 28);
         }
 
-        ofDrawBitmapString("Playing (Press Spacebar to Record)", grabber.getWidth() + 14, 14);
+        ofDrawBitmapString("Playing (Press Spacebar to Record)", 0 + 14, 14);
     }
     else
     {
-        ofDrawBitmapString("Recording (Press Spacebar to Play)", grabber.getWidth() + 14, 14);
+        grabber.draw(0, 0);
+        ofDrawBitmapString("Recording (Press Spacebar to Play)", 0 + 14, 14);
         ofDrawBitmapString(ofToString(frameBuffer.size()), 14, grabber.getHeight() - 28);
     }
+    ofPopMatrix();
     
 
     std::stringstream ss;

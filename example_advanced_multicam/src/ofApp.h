@@ -24,8 +24,8 @@ public:
 
     int totalHeight = 0;
 
-    int camWidth = 640;
-    int camHeight = 480;
-    int camFrameRate = 30;
+    int camWidth = 320;
+    int camHeight = 240;
+    int camFrameRate = 200;
 
 };

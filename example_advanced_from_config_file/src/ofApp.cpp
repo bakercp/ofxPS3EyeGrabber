@@ -14,10 +14,8 @@ void ofApp::setup()
     ofSetVerticalSync(true);
 
     // Load the JSON from a configuration file.
-    ofJson config;
-    ofFile file("settings.json");
-    file >> config;
-
+    ofJson config = ofLoadJson("settings.json");
+    
     // Create a grabber from the JSON.
     grabber = ofxPS3EyeGrabber::fromJSON(config);
 }
